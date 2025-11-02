@@ -60,8 +60,11 @@ def deepseek_chat(
         # Extract user message for stub
         user_msg = next((m["content"] for m in messages if m.get("role") == "user"), "")
         stub = _stub_response(user_msg)
-        # Return plain string to match actual DeepSeek API response format
-        return stub["answer"]
+        return json.dumps({
+            "answer": stub["answer"],
+            "citations": [],
+            "confidence": 0.75
+        })
     
     api_key = os.getenv("DEEPSEEK_API_KEY")
     if not api_key:
