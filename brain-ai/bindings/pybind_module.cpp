@@ -145,7 +145,8 @@ void save_index(const std::string &path) {
     auto &manager = ensure_manager();
     if (path.empty()) {
         if (!manager.save()) {
-            throw std::runtime_error("Failed to save index");
+            throw std::runtime_error(std::string("Failed to save index to default path: ")
+                                     + manager.get_config().index_path);
         }
         return;
     }
