@@ -208,12 +208,11 @@ size_t IndexManager::document_count() const {
     return documents_.size();
 }
 
-bool IndexManager::save() {
+bool IndexManager::save_unlocked() {
+    // Internal version without lock - assumes caller holds mutex_
     if (config_.index_path.empty()) {
         return false;
     }
-    
-    std::lock_guard<std::mutex> lock(mutex_);
     
     try {
         // Create directory if it doesn't exist
@@ -249,12 +248,16 @@ bool IndexManager::save() {
     }
 }
 
-bool IndexManager::load() {
+bool IndexManager::save() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return save_unlocked();
+}
+
+bool IndexManager::load_unlocked() {
+    // Internal version without lock - assumes caller holds mutex_
     if (config_.index_path.empty()) {
         return false;
     }
-    
-    std::lock_guard<std::mutex> lock(mutex_);
     
     try {
         // Load index
@@ -290,6 +293,155 @@ bool IndexManager::load() {
     } catch (const std::exception& e) {
         return false;
     }
+}
+
+bool IndexManager::load() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return load_unlocked();
+}
+
+bool IndexManager::save_as(const std::string& path, bool update_default) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (path.empty()) {
+        return false;
+    }
+    const std::filesystem::path dst(path);
+    const std::filesystem::path dir = dst.parent_path().empty() ? std::filesystem::path(".") : dst.parent_path();
+    std::error_code ec;
+    std::filesystem::create_directories(dir, ec);
+
+    // Write to a temporary file and atomically rename to target
+    const std::filesystem::path tmp = dst;
+    const std::string tmp_name = dst.filename().string() + ".tmp." + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const std::filesystem::path tmp_path = dst.parent_path() / tmp_name;
+
+    // Temporarily set the default path to tmp, call save_unlocked(), then rename
+    const std::string old_path = config_.index_path;
+    config_.index_path = tmp_path.string();
+    const bool ok = save_unlocked();  // Use unlocked version - we already hold the lock
+    if (!ok) {
+        // restore original path
+        config_.index_path = old_path;
+        // best-effort cleanup
+        std::filesystem::remove(tmp_path, ec);
+        return false;
+    }
+
+    // Atomic replace - need to move both index file and metadata file
+    const std::filesystem::path tmp_metadata = std::filesystem::path(tmp_path.string() + ".metadata.json");
+    const std::filesystem::path dst_metadata = std::filesystem::path(dst.string() + ".metadata.json");
+    
+    // Try atomic rename for both files
+    std::filesystem::rename(tmp_path, dst, ec);
+    if (ec) {
+        // Fallback: copy then remove tmp for main index
+        std::error_code copy_ec;
+        std::filesystem::copy_file(tmp_path, dst, std::filesystem::copy_options::overwrite_existing, copy_ec);
+        if (copy_ec) {
+            // Both rename and copy failed - restore original path and cleanup
+            config_.index_path = old_path;
+            std::filesystem::remove(tmp_path, ec);  // Best-effort cleanup
+            std::filesystem::remove(tmp_metadata, ec);  // Best-effort cleanup
+            return false;
+        }
+        // Copy succeeded, remove temporary file
+        std::filesystem::remove(tmp_path, ec);  // Ignore error on cleanup
+    }
+    
+    // Now handle metadata file
+    std::error_code metadata_ec;
+    std::filesystem::rename(tmp_metadata, dst_metadata, metadata_ec);
+    if (metadata_ec) {
+        // Fallback: copy then remove
+        std::filesystem::copy_file(tmp_metadata, dst_metadata, std::filesystem::copy_options::overwrite_existing, metadata_ec);
+        if (metadata_ec) {
+            // Metadata move failed - this is critical, need to clean up and fail
+            config_.index_path = old_path;
+            // Cleanup: remove destination index since we can't move metadata
+            std::filesystem::remove(dst, ec);
+            std::filesystem::remove(tmp_metadata, ec);
+            return false;
+        }
+        std::filesystem::remove(tmp_metadata, ec);  // Ignore error on cleanup
+    }
+
+    // Operation succeeded (either rename or copy)
+    if (update_default) {
+        config_.index_path = dst.string();
+    } else {
+        // restore original
+        config_.index_path = old_path;
+    }
+    last_save_ = std::chrono::steady_clock::now();
+    return true;
+}
+
+bool IndexManager::load_from(const std::string& path, bool update_default) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (path.empty()) {
+        return false;
+    }
+    if (!std::filesystem::exists(path)) {
+        // If target doesn't exist, reset to empty state and update default path if requested
+        if (update_default) {
+            config_.index_path = path;
+        }
+        // Reset containers but keep the same IndexManager instance
+        documents_.clear();
+        // Recreate HNSW index with current config safely
+        index_.reset();
+        index_ = std::make_unique<vector_search::HNSWIndex>(
+            config_.embedding_dim,
+            config_.max_elements,
+            config_.M,
+            config_.ef_construction
+        );
+        index_->set_ef_search(config_.ef_search);
+        stats_ = IndexStats{};
+        return true;
+    }
+
+    // Backup existing state before destroying it
+    const std::string old_path = config_.index_path;
+    auto old_documents = documents_;  // Copy documents map
+    auto old_index = std::move(index_);  // Move ownership of old index
+    auto old_stats = stats_;
+    
+    // Create new empty state
+    documents_.clear();
+    index_ = std::make_unique<vector_search::HNSWIndex>(
+        config_.embedding_dim,
+        config_.max_elements,
+        config_.M,
+        config_.ef_construction
+    );
+    index_->set_ef_search(config_.ef_search);
+    
+    // Try to load from new path
+    config_.index_path = path;
+    const bool ok = load_unlocked();  // Use unlocked version - we already hold the lock
+    
+    if (!ok) {
+        // Load failed - restore old state completely
+        documents_ = std::move(old_documents);
+        index_ = std::move(old_index);
+        stats_ = old_stats;
+        config_.index_path = old_path;
+        return false;
+    }
+    
+    // Load succeeded - old state is now discarded
+    // old_index will be automatically destroyed here
+    
+    if (!update_default) {
+        config_.index_path = old_path;
+    }
+    return true;
+}
+
+void IndexManager::set_index_path(const std::string& path) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    config_.index_path = path;
 }
 
 void IndexManager::clear() {

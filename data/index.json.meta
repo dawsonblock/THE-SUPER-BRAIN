@@ -1,0 +1,33 @@
+{
+  "M": 16,
+  "dim": 384,
+  "documents": [
+    {
+      "content": "Apollo Guidance Computer used rope memory for software storage.",
+      "doc_id": "int_test_2",
+      "internal_id": 1,
+      "metadata": {
+        "content": "Apollo Guidance Computer used rope memory for software storage.",
+        "content_length": 63,
+        "doc_id": "int_test_2",
+        "indexed_at": 1762121853
+      }
+    },
+    {
+      "content": "Rope memory stores bits by threading wires through magnetic cores.",
+      "doc_id": "int_test_1",
+      "internal_id": 0,
+      "metadata": {
+        "content": "Rope memory stores bits by threading wires through magnetic cores.",
+        "content_length": 66,
+        "doc_id": "int_test_1",
+        "indexed_at": 1762121853
+      }
+    }
+  ],
+  "ef_construction": 200,
+  "ef_search": 50,
+  "max_elements": 100000,
+  "next_internal_id": 2,
+  "space_type": "ip"
+}
