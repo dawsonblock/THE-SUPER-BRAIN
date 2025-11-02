@@ -300,99 +300,32 @@ bool IndexManager::load() {
     return load_unlocked();
 }
 
-bool IndexManager::save_as(const std::string& path, bool update_default) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (path.empty()) {
-        return false;
+// Now atomically replace final files
+// Use rename to final target names (same directory -> atomic on most filesystems)
+std::error_code r1, r2;
+std::filesystem::rename(final_tmp_idx, dst_idx, r1);
+std::filesystem::rename(final_tmp_meta, dst_meta, r2);
+if (r1 || r2) {
+    // Best effort fallback: copy+replace both
+    std::error_code c1, c2;
+    bool idx_replaced = true;
+    bool meta_replaced = true;
+    if (r1) {
+        std::filesystem::copy_file(final_tmp_idx, dst_idx, std::filesystem::copy_options::overwrite_existing, c1);
+        idx_replaced = !c1;
     }
-    const std::filesystem::path dst(path);
-    const std::filesystem::path dir = dst.parent_path().empty() ? std::filesystem::path(".") : dst.parent_path();
-    std::error_code ec;
-    std::filesystem::create_directories(dir, ec);
-
-    // Generate unique staging names in the same directory
-    const std::string stamp = std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
-    const std::filesystem::path stage_idx = dst.parent_path() / (dst.filename().string() + ".stage." + stamp);
-    const std::filesystem::path stage_meta = std::filesystem::path(stage_idx.string() + ".metadata.json");
-
-    // Save to staging index path
-    const std::string old_path = config_.index_path;
-    config_.index_path = stage_idx.string();
-    const bool ok = save_unlocked();
-    if (!ok) {
-        config_.index_path = old_path;
-        std::filesystem::remove(stage_idx, ec);
-        std::filesystem::remove(stage_meta, ec);
-        return false;
+    if (r2) {
+        std::filesystem::copy_file(final_tmp_meta, dst_meta, std::filesystem::copy_options::overwrite_existing, c2);
+        meta_replaced = !c2;
     }
-
-    // Prepare final target paths
-    const std::filesystem::path dst_idx = dst;
-    const std::filesystem::path dst_meta = std::filesystem::path(dst.string() + ".metadata.json");
-
-    // Atomically move staging files to final names; prefer rename, fallback to copy+replace
-    auto replace_file = [&](const std::filesystem::path& from, const std::filesystem::path& to) -> bool {
-        std::error_code rec;
-        std::filesystem::rename(from, to, rec);
-        if (!rec) return true;
-        // Fallback to copy+replace
-        std::filesystem::copy_file(from, to, std::filesystem::copy_options::overwrite_existing, rec);
-        if (rec) return false;
-        std::filesystem::remove(from, ec);
-        return true;
-    };
-
-    // Replace index first to keep pairs consistent only if metadata replacement also succeeds
-    // Use temporary final names to achieve all-or-nothing visibility
-    const std::filesystem::path final_tmp_idx = dst.parent_path() / (dst.filename().string() + ".new." + stamp);
-    const std::filesystem::path final_tmp_meta = std::filesystem::path(final_tmp_idx.string() + ".metadata.json");
-
-    // Move stage -> final_tmp
-    if (!replace_file(stage_idx, final_tmp_idx)) {
-        // Cleanup and restore
-        config_.index_path = old_path;
-        std::filesystem::remove(stage_idx, ec);
-        std::filesystem::remove(stage_meta, ec);
-        return false;
-    }
-    if (!replace_file(stage_meta, final_tmp_meta)) {
-        // Metadata failed: remove tmp idx to avoid partial update
-        std::filesystem::remove(final_tmp_idx, ec);
+    // Cleanup temp files
+    std::filesystem::remove(final_tmp_idx, ec);
+    std::filesystem::remove(final_tmp_meta, ec);
+    if (!idx_replaced || !meta_replaced) {
+        // Could not complete replacement; leave existing destination untouched as much as possible
         config_.index_path = old_path;
         return false;
     }
-
-    // Now atomically replace final files
-    // Use rename to final target names (same directory -> atomic on most filesystems)
-    std::error_code r1, r2;
-    std::filesystem::rename(final_tmp_idx, dst_idx, r1);
-    std::filesystem::rename(final_tmp_meta, dst_meta, r2);
-    if (r1 || r2) {
-        // Best effort fallback: copy+replace both
-        std::error_code c1, c2;
-        if (r1) {
-            std::filesystem::copy_file(final_tmp_idx, dst_idx, std::filesystem::copy_options::overwrite_existing, c1);
-        }
-        if (r2) {
-            std::filesystem::copy_file(final_tmp_meta, dst_meta, std::filesystem::copy_options::overwrite_existing, c2);
-        }
-        // Cleanup temp files
-        std::filesystem::remove(final_tmp_idx, ec);
-        std::filesystem::remove(final_tmp_meta, ec);
-        if (r1 && c1 || r2 && c2) {
-            // Could not complete replacement; leave existing destination untouched as much as possible
-            config_.index_path = old_path;
-            return false;
-        }
-    }
-
-    if (update_default) {
-        config_.index_path = dst.string();
-    } else {
-        config_.index_path = old_path;
-    }
-    last_save_ = std::chrono::steady_clock::now();
-    return true;
 }
 
 bool IndexManager::load_from(const std::string& path, bool update_default) {
