@@ -310,67 +310,85 @@ bool IndexManager::save_as(const std::string& path, bool update_default) {
     std::error_code ec;
     std::filesystem::create_directories(dir, ec);
 
-    // Write to a temporary file and atomically rename to target
-    const std::filesystem::path tmp = dst;
-    const std::string tmp_name = dst.filename().string() + ".tmp." + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
-    const std::filesystem::path tmp_path = dst.parent_path() / tmp_name;
+    // Generate unique staging names in the same directory
+    const std::string stamp = std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const std::filesystem::path stage_idx = dst.parent_path() / (dst.filename().string() + ".stage." + stamp);
+    const std::filesystem::path stage_meta = std::filesystem::path(stage_idx.string() + ".metadata.json");
 
-    // Temporarily set the default path to tmp, call save_unlocked(), then rename
+    // Save to staging index path
     const std::string old_path = config_.index_path;
-    config_.index_path = tmp_path.string();
-    const bool ok = save_unlocked();  // Use unlocked version - we already hold the lock
+    config_.index_path = stage_idx.string();
+    const bool ok = save_unlocked();
     if (!ok) {
-        // restore original path
         config_.index_path = old_path;
-        // best-effort cleanup
-        std::filesystem::remove(tmp_path, ec);
+        std::filesystem::remove(stage_idx, ec);
+        std::filesystem::remove(stage_meta, ec);
         return false;
     }
 
-    // Atomic replace - need to move both index file and metadata file
-    const std::filesystem::path tmp_metadata = std::filesystem::path(tmp_path.string() + ".metadata.json");
-    const std::filesystem::path dst_metadata = std::filesystem::path(dst.string() + ".metadata.json");
-    
-    // Try atomic rename for both files
-    std::filesystem::rename(tmp_path, dst, ec);
-    if (ec) {
-        // Fallback: copy then remove tmp for main index
-        std::error_code copy_ec;
-        std::filesystem::copy_file(tmp_path, dst, std::filesystem::copy_options::overwrite_existing, copy_ec);
-        if (copy_ec) {
-            // Both rename and copy failed - restore original path and cleanup
-            config_.index_path = old_path;
-            std::error_code remove_ec;
-            std::filesystem::remove(tmp_path, remove_ec);  // Best-effort cleanup
-            std::filesystem::remove(tmp_metadata, remove_ec);  // Best-effort cleanup
-            return false;
-        }
-        // Copy succeeded, remove temporary file
-        std::filesystem::remove(tmp_path, ec);  // Ignore error on cleanup
+    // Prepare final target paths
+    const std::filesystem::path dst_idx = dst;
+    const std::filesystem::path dst_meta = std::filesystem::path(dst.string() + ".metadata.json");
+
+    // Atomically move staging files to final names; prefer rename, fallback to copy+replace
+    auto replace_file = [&](const std::filesystem::path& from, const std::filesystem::path& to) -> bool {
+        std::error_code rec;
+        std::filesystem::rename(from, to, rec);
+        if (!rec) return true;
+        // Fallback to copy+replace
+        std::filesystem::copy_file(from, to, std::filesystem::copy_options::overwrite_existing, rec);
+        if (rec) return false;
+        std::filesystem::remove(from, ec);
+        return true;
+    };
+
+    // Replace index first to keep pairs consistent only if metadata replacement also succeeds
+    // Use temporary final names to achieve all-or-nothing visibility
+    const std::filesystem::path final_tmp_idx = dst.parent_path() / (dst.filename().string() + ".new." + stamp);
+    const std::filesystem::path final_tmp_meta = std::filesystem::path(final_tmp_idx.string() + ".metadata.json");
+
+    // Move stage -> final_tmp
+    if (!replace_file(stage_idx, final_tmp_idx)) {
+        // Cleanup and restore
+        config_.index_path = old_path;
+        std::filesystem::remove(stage_idx, ec);
+        std::filesystem::remove(stage_meta, ec);
+        return false;
     }
-    
-    // Now handle metadata file
-    std::error_code metadata_ec;
-    std::filesystem::rename(tmp_metadata, dst_metadata, metadata_ec);
-    if (metadata_ec) {
-        // Fallback: copy then remove
-        std::filesystem::copy_file(tmp_metadata, dst_metadata, std::filesystem::copy_options::overwrite_existing, metadata_ec);
-        if (metadata_ec) {
-            // Metadata move failed - this is critical, need to clean up and fail
-            config_.index_path = old_path;
-            // Cleanup: remove destination index since we can't move metadata
-            std::filesystem::remove(dst, ec);
-            std::filesystem::remove(tmp_metadata, ec);
-            return false;
-        }
-        std::filesystem::remove(tmp_metadata, ec);  // Ignore error on cleanup
+    if (!replace_file(stage_meta, final_tmp_meta)) {
+        // Metadata failed: remove tmp idx to avoid partial update
+        std::filesystem::remove(final_tmp_idx, ec);
+        config_.index_path = old_path;
+        return false;
     }
 
-    // Operation succeeded (either rename or copy)
+    // Now atomically replace final files
+    // Use rename to final target names (same directory -> atomic on most filesystems)
+    std::error_code r1, r2;
+    std::filesystem::rename(final_tmp_idx, dst_idx, r1);
+    std::filesystem::rename(final_tmp_meta, dst_meta, r2);
+    if (r1 || r2) {
+        // Best effort fallback: copy+replace both
+        std::error_code c1, c2;
+        if (r1) {
+            std::filesystem::copy_file(final_tmp_idx, dst_idx, std::filesystem::copy_options::overwrite_existing, c1);
+        }
+        if (r2) {
+            std::filesystem::copy_file(final_tmp_meta, dst_meta, std::filesystem::copy_options::overwrite_existing, c2);
+        }
+        // Cleanup temp files
+        std::filesystem::remove(final_tmp_idx, ec);
+        std::filesystem::remove(final_tmp_meta, ec);
+        if (r1 && c1 || r2 && c2) {
+            // Could not complete replacement; leave existing destination untouched as much as possible
+            config_.index_path = old_path;
+            return false;
+        }
+    }
+
     if (update_default) {
         config_.index_path = dst.string();
     } else {
-        // restore original
         config_.index_path = old_path;
     }
     last_save_ = std::chrono::steady_clock::now();
