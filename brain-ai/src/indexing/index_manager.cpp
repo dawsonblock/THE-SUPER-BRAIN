@@ -340,8 +340,9 @@ bool IndexManager::save_as(const std::string& path, bool update_default) {
         if (copy_ec) {
             // Both rename and copy failed - restore original path and cleanup
             config_.index_path = old_path;
-            std::filesystem::remove(tmp_path, ec);  // Best-effort cleanup
-            std::filesystem::remove(tmp_metadata, ec);  // Best-effort cleanup
+            std::error_code remove_ec;
+            std::filesystem::remove(tmp_path, remove_ec);  // Best-effort cleanup
+            std::filesystem::remove(tmp_metadata, remove_ec);  // Best-effort cleanup
             return false;
         }
         // Copy succeeded, remove temporary file
