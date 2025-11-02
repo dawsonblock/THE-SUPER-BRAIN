@@ -56,6 +56,9 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir --disable-pip-version-check \
                 --no-python-version-warning \
                 -r /tmp/requirements.txt
+# Copy REST service source after dependencies to leverage layer caching
+COPY brain-ai-rest-service /srv/app/brain-ai-rest-service
+WORKDIR /srv/app/brain-ai-rest-service
 
 ENV SAFE_MODE=1 \
     LLM_STUB=1 \
