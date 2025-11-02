@@ -113,9 +113,15 @@ jobs:
       - name: Run Python tests
         working-directory: brain-ai-rest-service
         run: |
-              name: python-coverage
-              fail_ci_if_error: true
-              token: ${{ secrets.CODECOV_TOKEN }}
+          pytest -q --cov=app --cov-report=xml:coverage.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./brain-ai-rest-service/coverage.xml
+          flags: python
+          name: python-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
