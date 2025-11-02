@@ -403,29 +403,28 @@ bool IndexManager::load_from(const std::string& path, bool update_default) {
 
     // Backup existing state before destroying it
     const std::string old_path = config_.index_path;
-    auto old_documents = documents_;  // Copy documents map
-    auto old_index = std::move(index_);  // Move ownership of old index
-    auto old_stats = stats_;
-    
-    // Create new empty state
-    documents_.clear();
-    index_ = std::make_unique<vector_search::HNSWIndex>(
-        config_.embedding_dim,
-        config_.max_elements,
-        config_.M,
-        config_.ef_construction
+
+    // Create a new empty state and swap with the current one
+    decltype(documents_) new_documents;
+    auto new_index = std::make_unique<vector_search::HNSWIndex>(
+        config_.embedding_dim, config_.max_elements, config_.M, config_.ef_construction
     );
-    index_->set_ef_search(config_.ef_search);
-    
-    // Try to load from new path
+    new_index->set_ef_search(config_.ef_search);
+    IndexStats new_stats{};
+
+    documents_.swap(new_documents);
+    index_.swap(new_index);
+    std::swap(stats_, new_stats);
+
+    // Try to load from new path into the now-current (previously new) state
     config_.index_path = path;
     const bool ok = load_unlocked();  // Use unlocked version - we already hold the lock
-    
+
     if (!ok) {
-        // Load failed - restore old state completely
-        documents_ = std::move(old_documents);
-        index_ = std::move(old_index);
-        stats_ = old_stats;
+        // Load failed - restore old state by swapping back
+        documents_.swap(new_documents);
+        index_.swap(new_index);
+        std::swap(stats_, new_stats);
         config_.index_path = old_path;
         return false;
     }
