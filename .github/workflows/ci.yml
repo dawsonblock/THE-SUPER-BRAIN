@@ -78,7 +78,14 @@ jobs:
 
       - name: Build
         working-directory: brain-ai/build
-        run: ninja -j $(nproc || sysctl -n hw.ncpu)
+        run: |
+          JOBS=1
+          if command -v nproc >/dev/null 2>&1; then
+            JOBS="$(nproc)"
+          elif command -v sysctl >/dev/null 2>&1; then
+            JOBS="$(sysctl -n hw.ncpu || echo 1)"
+          fi
+          ninja -j "${JOBS}"
 
       - name: Run C++ tests
         working-directory: brain-ai/build
