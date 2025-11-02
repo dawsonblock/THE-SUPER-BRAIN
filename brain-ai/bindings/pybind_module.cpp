@@ -143,8 +143,9 @@ std::vector<std::pair<std::string, float>> search(const std::string &query,
 
 void save_index(const std::string &path) {
     auto &manager = ensure_manager();
-    if (!manager.save(path)) {
-        throw std::runtime_error("Failed to save index to " + path);
+    // Note: save() doesn't take parameters, uses internal config path
+    if (!manager.save()) {
+        throw std::runtime_error("Failed to save index");
     }
 }
 
@@ -154,15 +155,13 @@ void load_index(const std::string &path) {
         IndexConfig config;
         config.embedding_dim = kEmbeddingDim;
         config.auto_save = false;
+        config.index_path = path;  // Set the path in config
         g_manager = std::make_unique<IndexManager>(config);
     }
     try {
-        if (!g_manager->load(path)) {
+        // Note: load() doesn't take parameters, uses internal config path
+        if (!g_manager->load()) {
             throw std::runtime_error("Failed to load index from " + path);
-        }
-        // Validate embedding dimension after load if supported by IndexManager
-        if (g_manager->embedding_dim() != kEmbeddingDim) {
-            throw std::runtime_error("Loaded index embedding_dim mismatch");
         }
     } catch (const std::exception &e) {
         throw std::runtime_error(std::string("Error loading index: ") + e.what());

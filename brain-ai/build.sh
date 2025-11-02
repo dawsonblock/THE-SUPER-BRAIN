@@ -14,6 +14,29 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Detect OS and set CPU count command
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    NUM_CPUS=$(sysctl -n hw.ncpu)
+    echo -e "${YELLOW}Detected macOS${NC}"
+    
+    # Detect Homebrew OpenSSL path
+    if command -v brew &> /dev/null; then
+        OPENSSL_ROOT=$(brew --prefix openssl@3 2>/dev/null || brew --prefix openssl 2>/dev/null || echo "")
+        if [ -n "$OPENSSL_ROOT" ]; then
+            export OPENSSL_ROOT_DIR="$OPENSSL_ROOT"
+            echo -e "${GREEN}✓ Found OpenSSL at $OPENSSL_ROOT${NC}"
+        fi
+    fi
+else
+    # Linux
+    NUM_CPUS=$(nproc)
+    echo -e "${YELLOW}Detected Linux${NC}"
+fi
+
+echo -e "${GREEN}✓ Using $NUM_CPUS CPU cores${NC}"
+echo ""
+
 # Parse arguments
 BUILD_TYPE="Release"
 RUN_TESTS=true
@@ -75,7 +98,7 @@ echo ""
 
 # Build
 echo -e "${YELLOW}Building project...${NC}"
-make -j$(nproc)
+make -j${NUM_CPUS}
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Build successful${NC}"

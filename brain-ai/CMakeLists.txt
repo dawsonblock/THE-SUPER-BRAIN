@@ -1,10 +1,20 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22)
 project(BrainAI VERSION 4.3.0 LANGUAGES CXX)
 
 # C++17 required
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Export compile commands for IDE support
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Enable ccache if available for faster rebuilds
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    message(STATUS "✅ Using ccache for faster builds")
+endif()
 
 # Optimization flags
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -53,7 +63,7 @@ FetchContent_MakeAvailable(hnswlib)
 FetchContent_Declare(
     httplib
     GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
-    GIT_TAG        v0.15.3
+    GIT_TAG        v0.16.3
 )
 FetchContent_MakeAvailable(httplib)
 
@@ -65,7 +75,7 @@ if(BUILD_PYTHON_BINDINGS)
         FetchContent_Declare(
             pybind11
             GIT_REPOSITORY https://github.com/pybind/pybind11.git
-            GIT_TAG        v2.11.1
+            GIT_TAG        v2.13.6
         )
         FetchContent_MakeAvailable(pybind11)
         set(pybind11_FOUND TRUE)  # Mark as found after fetch

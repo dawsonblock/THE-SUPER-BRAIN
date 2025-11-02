@@ -1,10 +1,15 @@
 version: "3.9"
 
+# Enable BuildKit for better caching and performance
+# Set DOCKER_BUILDKIT=1 or use 'docker buildx build'
+
 services:
   core:
     build:
       context: .
       dockerfile: Dockerfile.core
+      cache_from:
+        - type=local,src=/tmp/.buildx-cache
     volumes:
       - ./data:/srv/data
     healthcheck:
@@ -17,6 +22,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.rest
+      cache_from:
+        - type=local,src=/tmp/.buildx-cache
     environment:
       SAFE_MODE: "${SAFE_MODE:-0}"
       LLM_STUB: "${LLM_STUB:-0}"
