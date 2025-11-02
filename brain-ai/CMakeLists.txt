@@ -40,14 +40,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
-# hnswlib for vector search (pinned commit for reproducibility)
-# Pinned to commit 54ba206166f6a4d30b06d938753c75b6b036c6aa after v0.7.0 to ensure compatibility with C++17 and fix issue #123 (see https://github.com/nmslib/hnswlib/issues/123)
-set(HNSWLIB_GIT_TAG 54ba206166f6a4d30b06d938753c75b6b036c6aa CACHE STRING "Pinned hnswlib commit")
+# hnswlib for vector search (use release tag for reliability)
 FetchContent_Declare(
     hnswlib
     GIT_REPOSITORY https://github.com/nmslib/hnswlib.git
-    GIT_TAG        ${HNSWLIB_GIT_TAG}
-    GIT_SHALLOW    FALSE
+    GIT_TAG        v0.8.0
+    GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(hnswlib)
 
@@ -149,10 +147,18 @@ endif()
 if(BUILD_PYTHON_BINDINGS AND pybind11_FOUND)
     pybind11_add_module(brain_ai_py bindings/brain_ai_bindings.cpp)
     target_link_libraries(brain_ai_py PRIVATE brain_ai_lib)
+    target_include_directories(brain_ai_py PRIVATE 
+        ${CMAKE_SOURCE_DIR}/include
+        ${hnswlib_SOURCE_DIR}
+    )
     message(STATUS "✅ Python bindings enabled")
     
     pybind11_add_module(brain_ai_core bindings/pybind_module.cpp)
     target_link_libraries(brain_ai_core PRIVATE brain_ai_lib)
+    target_include_directories(brain_ai_core PRIVATE 
+        ${CMAKE_SOURCE_DIR}/include
+        ${hnswlib_SOURCE_DIR}
+    )
     set_target_properties(brain_ai_core PROPERTIES
         OUTPUT_NAME "brain_ai_core"
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/python"

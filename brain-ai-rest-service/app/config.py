@@ -48,6 +48,7 @@ class Settings:
     llm_timeout: int
     request_timeout_seconds: int
     log_level: str
+    cors_origins: list[str]
 
 
 def _build_settings() -> Settings:
@@ -84,6 +85,9 @@ def _build_settings() -> Settings:
     request_timeout_seconds = max(1, _to_int(os.getenv("REQUEST_TIMEOUT_SECONDS"), 20))
 
     log_level = os.getenv("LOG_LEVEL", "INFO").strip().upper() or "INFO"
+    
+    cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://your-ui.example")
+    cors_origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
 
     return Settings(
         safe_mode=safe_mode,
@@ -105,6 +109,7 @@ def _build_settings() -> Settings:
         llm_timeout=llm_timeout,
         request_timeout_seconds=request_timeout_seconds,
         log_level=log_level,
+        cors_origins=cors_origins,
     )
 
 

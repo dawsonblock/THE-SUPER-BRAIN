@@ -12,8 +12,9 @@ COPY brain-ai /opt/build/brain-ai
 
 RUN cd brain-ai && \
     mkdir -p build && cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release .. && \
-    cmake --build . -j
+    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DUSE_SANITIZERS=OFF .. && \
+    cmake --build . -j && \
+    ctest --output-on-failure
 
 FROM ubuntu:22.04
 RUN useradd --uid 1001 --create-home brain

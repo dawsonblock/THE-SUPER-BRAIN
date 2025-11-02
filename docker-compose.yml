@@ -7,25 +7,47 @@ services:
       dockerfile: Dockerfile.core
     volumes:
       - ./data:/srv/data
+    healthcheck:
+      test: ["CMD", "ls", "/srv/brain-ai/build"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   rest:
     build:
       context: .
       dockerfile: Dockerfile.rest
     environment:
-      SAFE_MODE: "1"
-      LLM_STUB: "1"
+      SAFE_MODE: "${SAFE_MODE:-0}"
+      LLM_STUB: "${LLM_STUB:-0}"
       EMBEDDINGS_BACKEND: "cpu"
-      API_KEY: "devkey"
+      EMBEDDING_MODEL_NAME: "sentence-transformers/all-MiniLM-L6-v2"
+      API_KEY: "${API_KEY:-devkey}"
       REQUIRE_API_KEY_FOR_WRITES: "1"
       INDEX_SNAPSHOT: "/srv/data/index.json"
       KILL_PATH: "/srv/data/brain.KILL"
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY}"
+      EVIDENCE_TAU: "${EVIDENCE_TAU:-0.70}"
+      N_SOLVERS: "${N_SOLVERS:-3}"
+      MULTI_AGENT_ENABLED: "${MULTI_AGENT_ENABLED:-true}"
+      TOP_K_RETRIEVAL: "50"
+      TOP_K_FINAL: "10"
+      CORS_ORIGINS: "http://localhost:3000,https://your-ui.example"
+      METRICS_ENABLED: "1"
     volumes:
       - ./data:/srv/data
     ports:
       - "5001:5001"
+      - "9090:9090"
     depends_on:
-      - core
+      core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   ocr:
     build:
@@ -33,6 +55,11 @@ services:
       dockerfile: Dockerfile.ocr
     ports:
       - "6001:6001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
   seed:
     image: curlimages/curl:8.10.1

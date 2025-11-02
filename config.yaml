@@ -1,0 +1,112 @@
+# Brain-AI RAG++ Production Configuration
+
+# Embedding configuration (OPTION A: Fast CPU)
+embeddings:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  dimension: 384  # Must match model output
+  backend: "cpu"  # or "gpu" if available
+  batch_size: 32
+
+# C++ Backend configuration
+cpp_backend:
+  embedding_dim: 384  # MUST match embeddings.dimension (LOCKED)
+  episodic_capacity: 128
+  sync_interval_docs: 50  # Rebuild index after N docs
+  normalize_embeddings: true  # L2 normalization for cosine similarity
+  fusion_weights:
+    vector_weight: 0.4
+    episodic_weight: 0.3
+    semantic_weight: 0.3
+
+# LLM Router configuration
+llm:
+  router:
+    reasoning_model: "deepseek-r1"  # For complex reasoning
+    chat_model: "deepseek-chat"     # For fast responses
+    cache_enabled: true  # Cache LLM responses for cost control
+    cache_ttl_sec: 900   # 15 minutes
+  timeout: 60
+  max_retries: 3
+  retry_backoff: 1.0
+
+# Evidence gating
+evidence:
+  threshold: 0.70  # Minimum confidence to return answer
+  citation_required: true
+  min_citations: 2
+
+# Multi-agent correction
+multi_agent:
+  enabled: true
+  n_solvers: 3
+  temperatures: [0.0, 0.3, 0.4]
+  planner_model: "deepseek-r1"
+  solver_model: "deepseek-chat"
+
+# Reranking
+reranker:
+  enabled: true
+  model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  top_k_retrieval: 50
+  top_k_final: 10
+
+# Chunking
+chunking:
+  chunk_size: 400
+  overlap: 50
+  min_size: 100
+  max_size: 500
+
+# Facts store (canonical triples)
+facts_store:
+  enabled: true
+  path: "./data/facts.db"
+  promote_threshold: 0.85
+  min_citations_for_promotion: 2
+
+# OCR service
+ocr:
+  enabled: true
+  endpoint: "http://localhost:8001/ocr"
+  timeout: 30
+  max_retries: 2
+
+# Monitoring
+monitoring:
+  prometheus_enabled: true
+  metrics_port: 9090
+  tracing:
+    enabled: true
+    sample_rate: 1.0
+    log_requests: true
+    log_responses: true
+
+# Security
+security:
+  api_key_required: true
+  cors_enabled: true
+  cors_origins:
+    - "http://localhost:3000"
+    - "https://your-ui.example"
+  max_request_size_mb: 10
+  rate_limit_rpm: 120
+
+# Infrastructure
+infrastructure:
+  index_snapshot_path: "./data/index.json"
+  kill_switch_path: "/tmp/brain.KILL"
+  data_dir: "./data"
+  log_level: "INFO"
+  structured_logging: true
+
+# Evaluation
+evaluation:
+  enabled: false  # Enable for continuous eval
+  eval_set_path: "./eval/eval_set.jsonl"
+  metrics_output: "./eval/metrics.json"
+  targets:
+    recall_at_k: 0.95
+    groundedness: 0.80
+    hallucination_max: 0.10
+    p95_latency_ms: 2000
+

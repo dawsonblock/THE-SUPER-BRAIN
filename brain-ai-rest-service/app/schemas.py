@@ -46,10 +46,21 @@ class FactPayload(StrictModel):
 
 
 class QueryResponse(BaseModel):
+    """Response schema for /query endpoint (legacy)."""
     answer: str
     hits: List[dict]
     model: str
     latency_ms: int
+
+
+class AnswerResponse(BaseModel):
+    """Response schema for /answer endpoint (RAG++ v3.0)."""
+    answer: str
+    citations: List[str]
+    confidence: float = Field(ge=0.0, le=1.0)
+    latency_ms: int
+    from_cache: bool = False
+    verification: dict | None = None
 
 
 __all__ = [
@@ -57,4 +68,5 @@ __all__ = [
     "QueryPayload",
     "FactPayload",
     "QueryResponse",
+    "AnswerResponse",
 ]

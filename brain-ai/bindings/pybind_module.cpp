@@ -59,24 +59,23 @@ std::vector<float> to_vector(const py::object &obj) {
         result.reserve(n);
     } catch (const py::error_already_set &) {
         // No __len__; fall back to strict counting with an upper bound
-
-            // Disperse contributions using two indices per char and clamp partial sums
-            for (unsigned char ch : text) {
-                state ^= static_cast<std::uint64_t>(ch);
-                state *= prime;
-                std::size_t idx1 = static_cast<std::size_t>(state % kEmbeddingDim);
-                std::size_t idx2 = static_cast<std::size_t>((state / prime) % kEmbeddingDim);
-                float value = static_cast<float>((state % 2000) / 1000.0 - 1.0f);
-                vec[idx1] = std::clamp(vec[idx1] + value * 0.7f, -5.0f, 5.0f);
-                vec[idx2] = std::clamp(vec[idx2] + value * 0.3f, -5.0f, 5.0f);
-            }
-
-            float norm = 0.0f;
-            for (float val : vec) norm += val * val;
-            norm = std::sqrt(norm);
-            if (norm > 1e-6f) {
-                for (float &val : vec) val /= norm;
-            }
+        result.reserve(kEmbeddingDim);
+    }
+    
+    // Convert elements
+    for (auto item : obj) {
+        result.push_back(py::cast<float>(item));
+        if (result.size() > kEmbeddingDim) {
+            throw std::invalid_argument("Embedding too long");
+        }
+    }
+    
+    if (result.size() != kEmbeddingDim) {
+        throw std::invalid_argument("Embedding dimension mismatch after conversion");
+    }
+    
+    return result;
+}
 
 std::vector<float> hashed_embedding(const std::string &text) {
     std::vector<float> vec(kEmbeddingDim, 0.0f);
@@ -108,7 +107,7 @@ std::vector<float> hashed_embedding(const std::string &text) {
 
 void index_document(const std::string &doc_id,
                     const std::string &text,
-                    const py::object &embedding_obj = py::none()) {
+                    const py::object &embedding_obj) {
     auto &manager = ensure_manager();
     std::vector<float> embedding = to_vector(embedding_obj);
     if (embedding.empty()) {
@@ -122,7 +121,7 @@ void index_document(const std::string &doc_id,
 
 std::vector<std::pair<std::string, float>> search(const std::string &query,
                                                   int top_k,
-                                                  const py::object &embedding_obj = py::none()) {
+                                                  const py::object &embedding_obj) {
     auto &manager = ensure_manager();
     std::vector<float> embedding = to_vector(embedding_obj);
     if (embedding.empty()) {

@@ -1,0 +1,6 @@
+{"query": "What is rope memory?", "expected_answer": "Rope memory is a type of read-only memory (ROM) that stores data by physically threading wires through magnetic cores. A wire threaded through a core represents a binary 1, while a wire passing around a core represents a binary 0.", "expected_citations": ["d1"], "task_type": "factual"}
+{"query": "How did rope memory store bits?", "expected_answer": "Rope memory stored bits by threading wires through ferrite cores for binary 1, or around cores for binary 0.", "expected_citations": ["d1"], "task_type": "factual"}
+{"query": "What is 2 + 2?", "expected_answer": "4", "expected_citations": [], "task_type": "math"}
+{"query": "Calculate 15 * 8", "expected_answer": "120", "expected_citations": [], "task_type": "math"}
+{"query": "What is the capital of an unknown country XYZABC?", "expected_answer": "Insufficient evidence.", "expected_citations": [], "task_type": "refusal"}
+

@@ -153,7 +153,8 @@ std::string sanitize_path(const std::string& raw_path) {
     return path;
 }
 
-void apply_timeout(httplib::Client& client, const OCRConfig& config) {
+template<typename ClientType>
+void apply_timeout(ClientType& client, const OCRConfig& config) {
     const auto safe_duration = [](std::chrono::milliseconds duration, std::chrono::milliseconds fallback) {
         return duration.count() <= 0 ? fallback : duration;
     };
@@ -178,10 +179,41 @@ void apply_timeout(httplib::Client& client, const OCRConfig& config) {
 // PIMPL implementation details
 struct OCRClient::Impl {
     std::unique_ptr<httplib::Client> http_client;
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+    std::unique_ptr<httplib::SSLClient> https_client;
+#endif
     std::string base_path;
     std::string host;
     int port{0};
     std::string scheme;
+    
+    // Helper template to apply timeout to both client types
+    template<typename ClientType>
+    void configure_client(ClientType& client, const OCRConfig& config) {
+        client.set_keep_alive(true);
+        client.set_follow_location(true);
+        apply_timeout(client, config);
+    }
+    
+    // Unified POST method
+    httplib::Result do_post(const std::string& path, const std::string& body, const std::string& content_type) {
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+        if (https_client) {
+            return https_client->Post(path.c_str(), body, content_type.c_str());
+        }
+#endif
+        return http_client->Post(path.c_str(), body, content_type.c_str());
+    }
+    
+    // Unified GET method
+    httplib::Result do_get(const std::string& path) {
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+        if (https_client) {
+            return https_client->Get(path.c_str());
+        }
+#endif
+        return http_client->Get(path.c_str());
+    }
     
     explicit Impl(const OCRConfig& config) {
         ParsedUrl parsed = parse_url(config.service_url);
@@ -209,22 +241,20 @@ struct OCRClient::Impl {
 
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
         if (scheme == "https") {
-            auto ssl_client = std::make_unique<httplib::SSLClient>(host.c_str(), port);
-            ssl_client->enable_server_certificate_verification(true);
-            http_client = std::move(ssl_client);
+            https_client = std::make_unique<httplib::SSLClient>(host.c_str(), port);
+            https_client->enable_server_certificate_verification(true);
+            configure_client(*https_client, config);
         } else {
             http_client = std::make_unique<httplib::Client>(host.c_str(), port);
+            configure_client(*http_client, config);
         }
 #else
         if (scheme == "https") {
             throw std::runtime_error("HTTPS OCR endpoints require OpenSSL support");
         }
         http_client = std::make_unique<httplib::Client>(host.c_str(), port);
+        configure_client(*http_client, config);
 #endif
-
-        http_client->set_keep_alive(true);
-        http_client->set_follow_location(true);
-        apply_timeout(*http_client, config);
 
         Logger::info(
             "OCRClient",
@@ -390,7 +420,7 @@ std::vector<OCRResult> OCRClient::process_batch(const std::vector<std::string>& 
 
 bool OCRClient::check_health() {
     try {
-        auto response = pimpl_->http_client->Get("/health");
+        auto response = pimpl_->do_get("/health");
         
         if (!response || response->status != 200) {
             Logger::warn("OCRClient", "Health check failed: status " + 
@@ -415,7 +445,7 @@ bool OCRClient::check_health() {
 
 nlohmann::json OCRClient::get_service_status() {
     try {
-        auto response = pimpl_->http_client->Get("/health");
+        auto response = pimpl_->do_get("/health");
         
         if (!response || response->status != 200) {
             return nlohmann::json::object();
@@ -446,7 +476,11 @@ void OCRClient::update_config(const OCRConfig& config) {
     }
     
     // Recreate HTTP client if URL changed
-    if (pimpl_->http_client) {
+    bool has_client = pimpl_->http_client != nullptr;
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+    has_client = has_client || (pimpl_->https_client != nullptr);
+#endif
+    if (has_client) {
         pimpl_ = std::make_unique<Impl>(config_);
     }
     
@@ -461,7 +495,7 @@ std::optional<std::string> OCRClient::make_request(const std::string& endpoint,
     while (attempt < config_.max_retries) {
         try {
             const auto full_endpoint = pimpl_->resolve_endpoint(endpoint);
-            auto response = pimpl_->http_client->Post(full_endpoint.c_str(), body, content_type.c_str());
+            auto response = pimpl_->do_post(full_endpoint, body, content_type);
             
             if (!response) {
                 Logger::warn("OCRClient", "Request failed: no response (attempt " + 
