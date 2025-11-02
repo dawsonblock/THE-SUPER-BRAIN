@@ -50,8 +50,12 @@ RUN set -e; \
       echo "Warning: brain_ai_core module not found; REST will run in pure-Python fallback mode"; \
     fi
 
+# Prefer a hashed, pinned requirements file for reproducible secure installs
+COPY brain-ai-rest-service/requirements.txt /tmp/requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --no-cache-dir -r brain-ai-rest-service/requirements.txt
+    pip install --no-cache-dir --disable-pip-version-check \
+                --no-python-version-warning \
+                -r /tmp/requirements.txt
 
 ENV SAFE_MODE=1 \
     LLM_STUB=1 \
