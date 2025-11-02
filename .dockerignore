@@ -22,8 +22,10 @@ brain-ai-rest-service/__pycache__/
 *~
 
 # Documentation
-*.md
-!README.md
+# Exclude specific markdown files but keep README.md
+BUILD.md
+BUILD_UPGRADE_COMPLETE.md
+PYBIND_MODULE_ISSUES.md
 docs/
 
 # Tests and CI
