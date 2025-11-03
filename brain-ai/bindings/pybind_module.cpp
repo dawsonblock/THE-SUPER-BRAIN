@@ -143,29 +143,28 @@ std::vector<std::pair<std::string, float>> search(const std::string &query,
 
 void save_index(const std::string &path) {
     auto &manager = ensure_manager();
-    if (!manager.save(path)) {
+    if (path.empty()) {
+        if (!manager.save()) {
+            throw std::runtime_error(std::string("Failed to save index to default path: ")
+                                     + manager.get_config().index_path);
+        }
+        return;
+    }
+    if (!manager.save_as(path, /*update_default=*/true)) {
         throw std::runtime_error("Failed to save index to " + path);
     }
 }
 
 void load_index(const std::string &path) {
-    std::scoped_lock<std::mutex> lock(g_mutex);
-    if (!g_manager) {
-        IndexConfig config;
-        config.embedding_dim = kEmbeddingDim;
-        config.auto_save = false;
-        g_manager = std::make_unique<IndexManager>(config);
+    auto &manager = ensure_manager();
+    if (path.empty()) {
+        throw std::invalid_argument("load_index requires a non-empty path");
     }
-    try {
-        if (!g_manager->load(path)) {
-            throw std::runtime_error("Failed to load index from " + path);
-        }
-        // Validate embedding dimension after load if supported by IndexManager
-        if (g_manager->embedding_dim() != kEmbeddingDim) {
-            throw std::runtime_error("Loaded index embedding_dim mismatch");
-        }
-    } catch (const std::exception &e) {
-        throw std::runtime_error(std::string("Error loading index: ") + e.what());
+    if (!manager.load_from(path, /*update_default=*/true)) {
+        throw std::runtime_error("Failed to load index from " + path);
+    }
+    if (manager.embedding_dim() != kEmbeddingDim) {
+        throw std::runtime_error("Loaded index embedding_dim mismatch");
     }
 }
 

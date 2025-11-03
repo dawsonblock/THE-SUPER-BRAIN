@@ -49,6 +49,14 @@ if(NOT GTest_FOUND)
     target_link_libraries(brain_ai_document_processor_tests PRIVATE brain_ai_lib)
     target_link_libraries(brain_ai_ocr_integration_tests PRIVATE brain_ai_lib)
     
+    # Add hnswlib headers to all test targets
+    target_include_directories(brain_ai_tests PRIVATE ${hnswlib_SOURCE_DIR})
+    target_include_directories(brain_ai_monitoring_tests PRIVATE ${hnswlib_SOURCE_DIR})
+    target_include_directories(brain_ai_resilience_tests PRIVATE ${hnswlib_SOURCE_DIR})
+    target_include_directories(brain_ai_vector_search_tests PRIVATE ${hnswlib_SOURCE_DIR})
+    target_include_directories(brain_ai_document_processor_tests PRIVATE ${hnswlib_SOURCE_DIR})
+    target_include_directories(brain_ai_ocr_integration_tests PRIVATE ${hnswlib_SOURCE_DIR})
+    
 else()
     message(STATUS "Google Test found - building with GTest")
     

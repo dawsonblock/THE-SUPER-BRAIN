@@ -218,6 +218,29 @@ public:
     bool load();
     
     /**
+     * @brief Save index to a specific path atomically, without requiring manager recreation
+     * @param path Target path to save
+     * @param update_default If true, update internal default path to this path
+     * @return true if successful
+     */
+    bool save_as(const std::string& path, bool update_default = true);
+    
+    /**
+     * @brief Load index from a specific path safely by resetting internal state
+     *        without destroying the IndexManager instance
+     * @param path Source path to load
+     * @param update_default If true, update internal default path to this path
+     * @return true if successful
+     */
+    bool load_from(const std::string& path, bool update_default = true);
+    
+    /**
+     * @brief Explicitly set the default index path for subsequent save()/load()
+     * @param path New default path
+     */
+    void set_index_path(const std::string& path);
+    
+    /**
      * @brief Clear all documents
      */
     void clear();
@@ -241,6 +264,10 @@ public:
     const IndexConfig& get_config() const { return config_; }
 
 private:
+    // Internal unlocked versions for use by save_as/load_from
+    bool save_unlocked();
+    bool load_unlocked();
+    
     IndexConfig config_;
     std::unique_ptr<vector_search::HNSWIndex> index_;
     
