@@ -398,7 +398,7 @@ bool IndexManager::load_from(const std::string& path, bool update_default) {
         );
         index_->set_ef_search(config_.ef_search);
         stats_ = IndexStats{};
-        return true;
+        return false;
     }
 
     // Backup existing state before destroying it
