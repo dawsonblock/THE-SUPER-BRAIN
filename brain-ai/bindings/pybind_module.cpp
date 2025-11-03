@@ -163,6 +163,9 @@ void load_index(const std::string &path) {
     if (!manager.load_from(path, /*update_default=*/true)) {
         throw std::runtime_error("Failed to load index from " + path);
     }
+    if (manager.embedding_dim() != kEmbeddingDim) {
+        throw std::runtime_error("Loaded index embedding_dim mismatch");
+    }
 }
 
 PYBIND11_MODULE(brain_ai_core, m) {
