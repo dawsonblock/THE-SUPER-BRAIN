@@ -221,6 +221,13 @@ async def query(payload: QueryPayload, request: Request) -> QueryResponse:
     )
 
 
+# Alias for GUI compatibility
+@app.post("/answer", response_model=QueryResponse)
+async def answer(payload: QueryPayload, request: Request) -> QueryResponse:
+    """Alias for /query endpoint to support GUI expectations."""
+    return await query(payload, request)
+
+
 @app.post("/facts", response_model=Dict[str, object])
 async def upsert_fact(payload: FactPayload, request: Request) -> Dict[str, object]:
     _require_api_key(request)
