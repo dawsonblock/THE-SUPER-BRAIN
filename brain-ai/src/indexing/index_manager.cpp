@@ -401,7 +401,8 @@ bool IndexManager::load_from(const std::string& path, bool update_default) {
         );
         index_->set_ef_search(config_.ef_search);
         stats_ = IndexStats{};
-        return false;
+        // Successfully initialized empty index at new path
+        return true;
     }
 
     // Backup existing state before destroying it
