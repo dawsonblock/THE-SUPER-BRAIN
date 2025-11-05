@@ -300,34 +300,6 @@ bool IndexManager::load() {
     return load_unlocked();
 }
 
-// Now atomically replace final files
-// Use rename to final target names (same directory -> atomic on most filesystems)
-std::error_code r1, r2;
-std::filesystem::rename(final_tmp_idx, dst_idx, r1);
-std::filesystem::rename(final_tmp_meta, dst_meta, r2);
-if (r1 || r2) {
-    // Best effort fallback: copy+replace both
-    std::error_code c1, c2;
-    bool idx_replaced = true;
-    bool meta_replaced = true;
-    if (r1) {
-        std::filesystem::copy_file(final_tmp_idx, dst_idx, std::filesystem::copy_options::overwrite_existing, c1);
-        idx_replaced = !c1;
-    }
-    if (r2) {
-        std::filesystem::copy_file(final_tmp_meta, dst_meta, std::filesystem::copy_options::overwrite_existing, c2);
-        meta_replaced = !c2;
-    }
-    // Cleanup temp files
-    std::filesystem::remove(final_tmp_idx, ec);
-    std::filesystem::remove(final_tmp_meta, ec);
-    if (!idx_replaced || !meta_replaced) {
-        // Could not complete replacement; leave existing destination untouched as much as possible
-        config_.index_path = old_path;
-        return false;
-    }
-}
-
 bool IndexManager::load_from(const std::string& path, bool update_default) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (path.empty()) {

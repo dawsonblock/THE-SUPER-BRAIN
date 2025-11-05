@@ -208,7 +208,7 @@ async def query(payload: QueryPayload, request: Request) -> QueryResponse:
     )
 
     duration = time.perf_counter() - start
-    QUERY_LATENCY.observe(duration)
+    QUERY_LATENCY.labels(stage="total").observe(duration)
 
     if "error" in answer:
         ERROR_COUNT.labels(component="llm").inc()

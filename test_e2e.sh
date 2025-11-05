@@ -56,9 +56,9 @@ fi
 
 # ==================== Test 2: REST Service Health ====================
 test_start "REST Service Health Check"
-if response=$(curl -s -f "$REST_SERVICE/api/v1/health"); then
-    status=$(echo "$response" | jq -r '.status')
-    if [ "$status" = "healthy" ]; then
+if response=$(curl -s -f "$REST_SERVICE/healthz"); then
+    ok=$(echo "$response" | jq -r '.ok')
+    if [ "$ok" = "true" ]; then
         test_pass
     else
         test_fail "REST service not healthy"

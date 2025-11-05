@@ -32,6 +32,10 @@ class OCREngine:
     
     def _load_model(self):
         """Load DeepSeek-OCR model"""
+        if self.settings.mock_mode:
+            logger.info("Running in MOCK mode - no model will be loaded")
+            return
+        
         try:
             if self.settings.use_vllm:
                 self._load_vllm_model()
@@ -125,6 +129,10 @@ class OCREngine:
             Dictionary with extracted text and metadata
         """
         try:
+            # Mock mode returns simulated results
+            if self.settings.mock_mode:
+                return self._process_mock(image, mode, task)
+            
             # Get prompt template
             prompt = PROMPT_TEMPLATES.get(task, PROMPT_TEMPLATES["ocr"])
             
@@ -136,6 +144,52 @@ class OCREngine:
         except Exception as e:
             logger.error(f"Processing failed: {e}", exc_info=True)
             raise
+    
+    def _process_mock(
+        self,
+        image: Image.Image,
+        mode: str,
+        task: str
+    ) -> Dict[str, Any]:
+        """Mock processing for testing"""
+        import time
+        import random
+        
+        # Simulate processing time based on mode
+        processing_times = {
+            "tiny": 0.1,
+            "small": 0.2,
+            "base": 0.3,
+            "large": 0.5,
+            "gundam": 0.8
+        }
+        time.sleep(processing_times.get(mode, 0.3))
+        
+        # Generate mock text based on task
+        mock_texts = {
+            "ocr": f"Mock OCR text extracted from image ({image.size[0]}x{image.size[1]})",
+            "markdown": f"# Mock Document\n\nThis is mock markdown content extracted from the image.\n\n- Image size: {image.size[0]}x{image.size[1]}\n- Mode: {mode}\n- Task: {task}",
+            "figure": f"Mock figure analysis: The image contains visual elements at resolution {image.size[0]}x{image.size[1]}",
+            "reference": "Mock references: [1] Sample Reference, [2] Another Reference",
+            "describe": f"Mock description: This is an image with dimensions {image.size[0]}x{image.size[1]} processed in {mode} mode"
+        }
+        
+        text = mock_texts.get(task, mock_texts["ocr"])
+        
+        # Confidence varies by mode
+        confidence_map = {
+            "tiny": 0.75,
+            "small": 0.82,
+            "base": 0.90,
+            "large": 0.95,
+            "gundam": 0.98
+        }
+        
+        return {
+            "text": text,
+            "confidence": confidence_map.get(mode, 0.90) + random.uniform(-0.05, 0.05),
+            "tokens_generated": len(text.split())
+        }
     
     def _process_vllm(
         self,
@@ -223,6 +277,8 @@ class OCREngine:
     
     def is_loaded(self) -> bool:
         """Check if model is loaded"""
+        if self.settings.mock_mode:
+            return True  # Mock mode is always "loaded"
         if self.settings.use_vllm:
             return self.llm is not None
         else:

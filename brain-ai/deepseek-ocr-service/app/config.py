@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
     
+    # Mock mode (for testing without model)
+    mock_mode: bool = False
+    
     class Config:
         env_prefix = "DEEPSEEK_OCR_"
         case_sensitive = False
