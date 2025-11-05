@@ -7,7 +7,7 @@ WORKDIR /app
 COPY brain-ai-gui/package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy source files
 COPY brain-ai-gui/ ./
