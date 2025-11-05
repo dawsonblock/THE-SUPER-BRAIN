@@ -300,80 +300,32 @@ bool IndexManager::load() {
     return load_unlocked();
 }
 
-bool IndexManager::save_as(const std::string& path, bool update_default) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (path.empty()) {
+// Now atomically replace final files
+// Use rename to final target names (same directory -> atomic on most filesystems)
+std::error_code r1, r2;
+std::filesystem::rename(final_tmp_idx, dst_idx, r1);
+std::filesystem::rename(final_tmp_meta, dst_meta, r2);
+if (r1 || r2) {
+    // Best effort fallback: copy+replace both
+    std::error_code c1, c2;
+    bool idx_replaced = true;
+    bool meta_replaced = true;
+    if (r1) {
+        std::filesystem::copy_file(final_tmp_idx, dst_idx, std::filesystem::copy_options::overwrite_existing, c1);
+        idx_replaced = !c1;
+    }
+    if (r2) {
+        std::filesystem::copy_file(final_tmp_meta, dst_meta, std::filesystem::copy_options::overwrite_existing, c2);
+        meta_replaced = !c2;
+    }
+    // Cleanup temp files
+    std::filesystem::remove(final_tmp_idx, ec);
+    std::filesystem::remove(final_tmp_meta, ec);
+    if (!idx_replaced || !meta_replaced) {
+        // Could not complete replacement; leave existing destination untouched as much as possible
+        config_.index_path = old_path;
         return false;
     }
-    const std::filesystem::path dst(path);
-    const std::filesystem::path dir = dst.parent_path().empty() ? std::filesystem::path(".") : dst.parent_path();
-    std::error_code ec;
-    std::filesystem::create_directories(dir, ec);
-
-    // Write to a temporary file and atomically rename to target
-    const std::filesystem::path tmp = dst;
-    const std::string tmp_name = dst.filename().string() + ".tmp." + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
-    const std::filesystem::path tmp_path = dst.parent_path() / tmp_name;
-
-    // Temporarily set the default path to tmp, call save_unlocked(), then rename
-    const std::string old_path = config_.index_path;
-    config_.index_path = tmp_path.string();
-    const bool ok = save_unlocked();  // Use unlocked version - we already hold the lock
-    if (!ok) {
-        // restore original path
-        config_.index_path = old_path;
-        // best-effort cleanup
-        std::filesystem::remove(tmp_path, ec);
-        return false;
-    }
-
-    // Atomic replace - need to move both index file and metadata file
-    const std::filesystem::path tmp_metadata = std::filesystem::path(tmp_path.string() + ".metadata.json");
-    const std::filesystem::path dst_metadata = std::filesystem::path(dst.string() + ".metadata.json");
-    
-    // Try atomic rename for both files
-    std::filesystem::rename(tmp_path, dst, ec);
-    if (ec) {
-        // Fallback: copy then remove tmp for main index
-        std::error_code copy_ec;
-        std::filesystem::copy_file(tmp_path, dst, std::filesystem::copy_options::overwrite_existing, copy_ec);
-        if (copy_ec) {
-            // Both rename and copy failed - restore original path and cleanup
-            config_.index_path = old_path;
-            std::filesystem::remove(tmp_path, ec);  // Best-effort cleanup
-            std::filesystem::remove(tmp_metadata, ec);  // Best-effort cleanup
-            return false;
-        }
-        // Copy succeeded, remove temporary file
-        std::filesystem::remove(tmp_path, ec);  // Ignore error on cleanup
-    }
-    
-    // Now handle metadata file
-    std::error_code metadata_ec;
-    std::filesystem::rename(tmp_metadata, dst_metadata, metadata_ec);
-    if (metadata_ec) {
-        // Fallback: copy then remove
-        std::filesystem::copy_file(tmp_metadata, dst_metadata, std::filesystem::copy_options::overwrite_existing, metadata_ec);
-        if (metadata_ec) {
-            // Metadata move failed - this is critical, need to clean up and fail
-            config_.index_path = old_path;
-            // Cleanup: remove destination index since we can't move metadata
-            std::filesystem::remove(dst, ec);
-            std::filesystem::remove(tmp_metadata, ec);
-            return false;
-        }
-        std::filesystem::remove(tmp_metadata, ec);  // Ignore error on cleanup
-    }
-
-    // Operation succeeded (either rename or copy)
-    if (update_default) {
-        config_.index_path = dst.string();
-    } else {
-        // restore original
-        config_.index_path = old_path;
-    }
-    last_save_ = std::chrono::steady_clock::now();
-    return true;
 }
 
 bool IndexManager::load_from(const std::string& path, bool update_default) {
@@ -407,29 +359,28 @@ bool IndexManager::load_from(const std::string& path, bool update_default) {
 
     // Backup existing state before destroying it
     const std::string old_path = config_.index_path;
-    auto old_documents = documents_;  // Copy documents map
-    auto old_index = std::move(index_);  // Move ownership of old index
-    auto old_stats = stats_;
-    
-    // Create new empty state
-    documents_.clear();
-    index_ = std::make_unique<vector_search::HNSWIndex>(
-        config_.embedding_dim,
-        config_.max_elements,
-        config_.M,
-        config_.ef_construction
+
+    // Create a new empty state and swap with the current one
+    decltype(documents_) new_documents;
+    auto new_index = std::make_unique<vector_search::HNSWIndex>(
+        config_.embedding_dim, config_.max_elements, config_.M, config_.ef_construction
     );
-    index_->set_ef_search(config_.ef_search);
-    
-    // Try to load from new path
+    new_index->set_ef_search(config_.ef_search);
+    IndexStats new_stats{};
+
+    documents_.swap(new_documents);
+    index_.swap(new_index);
+    std::swap(stats_, new_stats);
+
+    // Try to load from new path into the now-current (previously new) state
     config_.index_path = path;
     const bool ok = load_unlocked();  // Use unlocked version - we already hold the lock
-    
+
     if (!ok) {
-        // Load failed - restore old state completely
-        documents_ = std::move(old_documents);
-        index_ = std::move(old_index);
-        stats_ = old_stats;
+        // Load failed - restore old state by swapping back
+        documents_.swap(new_documents);
+        index_.swap(new_index);
+        std::swap(stats_, new_stats);
         config_.index_path = old_path;
         return false;
     }

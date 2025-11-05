@@ -145,7 +145,8 @@ void save_index(const std::string &path) {
     auto &manager = ensure_manager();
     if (path.empty()) {
         if (!manager.save()) {
-            throw std::runtime_error("Failed to save index");
+            throw std::runtime_error(std::string("Failed to save index to default path: ")
+                                     + manager.get_config().index_path);
         }
         return;
     }
@@ -157,11 +158,13 @@ void save_index(const std::string &path) {
 void load_index(const std::string &path) {
     auto &manager = ensure_manager();
     if (path.empty()) {
-        // No-op: nothing to load without a path
-        return;
+        throw std::invalid_argument("load_index requires a non-empty path");
     }
     if (!manager.load_from(path, /*update_default=*/true)) {
         throw std::runtime_error("Failed to load index from " + path);
+    }
+    if (manager.embedding_dim() != kEmbeddingDim) {
+        throw std::runtime_error("Loaded index embedding_dim mismatch");
     }
 }
 
