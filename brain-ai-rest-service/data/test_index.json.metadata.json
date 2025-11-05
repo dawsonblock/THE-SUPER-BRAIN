@@ -1,0 +1,8 @@
+{
+  "test1": {
+    "content": "This is a test document",
+    "content_length": 23,
+    "doc_id": "test1",
+    "indexed_at": 1762289539
+  }
+}

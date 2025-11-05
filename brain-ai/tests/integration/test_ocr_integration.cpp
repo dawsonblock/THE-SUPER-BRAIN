@@ -390,13 +390,15 @@ bool test_service_timeout() {
     // This test uses a very short timeout to trigger timeout handling
     OCRConfig config;
     config.service_url = OCR_SERVICE_URL;
-    config.timeout = std::chrono::milliseconds(1);  // 1ms timeout, very likely to trigger
+    // Use extremely short millisecond-level timeouts to reliably trigger timeout condition
+    config.connect_timeout = std::chrono::milliseconds(1);  // 1ms connect timeout
+    config.read_timeout = std::chrono::milliseconds(1);     // 1ms read timeout
     
     try {
         OCRClient client(config);
         
-        // Service might not be available or timeout is too short
-        // Either way, we're testing the timeout mechanism
+        // With 1ms timeouts, this should trigger a timeout exception
+        // even for a local service
         client.check_health();
         
         // If we get here, the timeout did NOT trigger as expected.

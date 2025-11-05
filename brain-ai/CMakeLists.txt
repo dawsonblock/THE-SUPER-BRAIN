@@ -146,6 +146,10 @@ endif()
 # Main executable (demo)
 add_executable(brain_ai_demo src/main.cpp)
 target_link_libraries(brain_ai_demo PRIVATE brain_ai_lib)
+target_include_directories(brain_ai_demo PRIVATE 
+    ${CMAKE_SOURCE_DIR}/include
+    ${hnswlib_SOURCE_DIR}
+)
 
 # Tests
 if(BUILD_TESTS)

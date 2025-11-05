@@ -39,3 +39,28 @@ Testing/
 # Logs
 *.log
 logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Data
+*.db
+*.db-journal
+
+# Temporary files
+*.tmp
+*.tmp.*
+.DS_Store

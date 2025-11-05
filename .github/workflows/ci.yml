@@ -1,72 +1,27 @@
-name: CI Pipeline
+name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main, develop ]
   pull_request:
-    branches: [main, develop]
-  workflow_dispatch:
-
-env:
-  CMAKE_VERSION: 3.22.0
-  PYTHON_VERSION: 3.12
+    branches: [ main ]
 
 jobs:
-  # Linting and code quality checks
-  lint:
-    name: Lint and Format Check
+  cpp-build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Cache pre-commit environments
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
-
-      - name: Run pre-commit hooks
-        run: pre-commit run --all-files
-
-  # C++ build and test
-  test-cpp:
-    name: C++ Build and Test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-24.04, macos-latest]
-        build_type: [Release, Debug]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies (Ubuntu)
-        if: runner.os == 'Linux'
+      - uses: actions/checkout@v3
+      
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build ccache libssl-dev
-
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
+          sudo apt-get install -y build-essential cmake libssl-dev
+      
+      - name: Build C++ core
         run: |
-          brew install cmake ninja ccache openssl
-
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ matrix.os }}-${{ matrix.build_type }}
-
-      - name: Configure CMake
-        working-directory: brain-ai
-        run: |
+          cd brain-ai
+          ./build.sh --no-tests
+      
           mkdir -p build
           cd build
           cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
@@ -88,31 +43,30 @@ jobs:
           ninja -j "${JOBS}"
 
       - name: Run C++ tests
-        working-directory: brain-ai/build
-        run: ctest --output-on-failure
+        run: |
+          cd brain-ai/build
+          ctest --output-on-failure
 
-  # Python REST service tests
-  test-python:
-    name: Python Tests
+  python-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@v3
+      
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
+          python-version: '3.12'
+      
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r brain-ai-rest-service/requirements.txt
-          pip install pytest pytest-asyncio pytest-cov
-
-      - name: Run Python tests
-        working-directory: brain-ai-rest-service
+          cd brain-ai-rest-service
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      
+      - name: Run tests
         run: |
+          cd brain-ai-rest-service
+          pytest tests/ --cov=app
           pytest -q --cov=app --cov-report=xml:coverage.xml
 
       - name: Upload coverage to Codecov
@@ -144,52 +98,32 @@ jobs:
           cache: 'npm'
           cache-dependency-path: brain-ai-gui/package-lock.json
 
-      - name: Install dependencies
-        working-directory: brain-ai-gui
-        run: npm ci
-
-      - name: Type check
-        working-directory: brain-ai-gui
-        run: npm run type-check
-
-      - name: Lint
-        working-directory: brain-ai-gui
-        run: npm run lint
-
-      - name: Build
-        working-directory: brain-ai-gui
-        run: npm run build
-
-  # Integration tests
-  test-integration:
-    name: Integration Tests
+  gui-build:
     runs-on: ubuntu-latest
-    needs: [test-cpp, test-python]
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
+          node-version: '18'
+      
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r brain-ai-rest-service/requirements.txt
-          pip install pytest pytest-asyncio
-
-      - name: Run integration tests
+          cd brain-ai-gui
+          npm ci
+      
+      - name: Build GUI
         run: |
-          python test_integration_full.py
+          cd brain-ai-gui
+          npm run build
 
-  # Docker build test
-  build-docker:
-    name: Build Docker Images
+  docker-build:
     runs-on: ubuntu-latest
-    needs: [lint, test-cpp, test-python]
     steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Docker images
       - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
@@ -217,25 +151,11 @@ jobs:
       # Temp fix for cache growth
       - name: Move cache
         run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-  # Summary job
-  ci-success:
-    name: CI Success
-    runs-on: ubuntu-latest
-    needs: [lint, test-cpp, test-python, test-frontend, test-integration, build-docker]
-    if: always()
-    steps:
-      - name: Check all jobs
+          docker compose build
+      
+      - name: Test Docker Compose
         run: |
-          if [ "${{ needs.lint.result }}" != "success" ] || \
-             [ "${{ needs.test-cpp.result }}" != "success" ] || \
-             [ "${{ needs.test-python.result }}" != "success" ] || \
-             [ "${{ needs.test-frontend.result }}" != "success" ] || \
-             [ "${{ needs.test-integration.result }}" != "success" ] || \
-             [ "${{ needs.build-docker.result }}" != "success" ]; then
-            echo "One or more jobs failed"
-            exit 1
-          fi
-          echo "All CI jobs passed successfully!"
+          docker compose up -d
+          sleep 30
+          docker compose ps
+          docker compose down

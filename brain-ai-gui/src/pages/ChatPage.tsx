@@ -20,7 +20,7 @@ export default function ChatPage() {
 
   const queryMutation = useMutation({
     mutationFn: apiClient.query,
-    onSuccess: (data, variables) => {
+    onSuccess: (data, _variables) => {
       const assistantMessage: Message = {
         id: Date.now().toString() + '-assistant',
         role: 'assistant',

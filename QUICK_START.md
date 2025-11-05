@@ -1,10 +1,100 @@
 # Brain-AI v4.0 - Quick Start Guide
 
-**⚡ 5-Minute Overview**
+**⚡ Get Started in 5 Minutes**
 
 ---
 
-## What Is This?
+## 🚀 Quick Setup
+
+### Option 1: Local Development (Recommended for Development)
+
+```bash
+# 1. Clone and enter directory
+cd C-AI-BRAIN-2
+
+# 2. Run the development startup script
+./start_dev.sh
+
+# 3. Access the system
+# GUI:      http://localhost:3000
+# REST API: http://localhost:5001
+# Metrics:  http://localhost:5001/metrics
+```
+
+The `start_dev.sh` script will:
+- Build C++ core with Python bindings
+- Start REST API with hot reload (SAFE_MODE=1, no real API calls)
+- Start GUI dev server with hot reload
+- Create all necessary data directories
+
+**Stop services:**
+```bash
+./stop_dev.sh  # or Ctrl+C in the terminal
+```
+
+### Option 2: Docker Production Deployment
+
+```bash
+# 1. Set up environment
+cp env.example .env
+# Edit .env with your API keys (or use defaults for testing)
+
+# 2. Start all services
+docker compose up --build
+
+# 3. Access the system
+# GUI:      http://localhost:3000
+# REST API: http://localhost:5001
+# Metrics:  http://localhost:5001/metrics
+
+# 4. Stop services
+docker compose down
+```
+
+### Option 3: Production Deployment (Local)
+
+```bash
+# 1. Set up production environment
+cp env.example .env.production
+# Edit .env.production with your production API keys
+
+# 2. Run production startup script
+./start_production.sh
+```
+
+---
+
+## 🧪 Testing
+
+### Run All Tests
+```bash
+# C++ tests
+cd brain-ai/build
+ctest --output-on-failure
+
+# End-to-end integration test
+./test_e2e_full.sh
+```
+
+### Run Individual Components
+```bash
+# C++ core only
+cd brain-ai && ./build.sh
+
+# REST API only
+cd brain-ai-rest-service
+uvicorn app:app --reload
+
+# GUI only
+cd brain-ai-gui
+npm run dev
+```
+
+---
+
+## 📚 System Overview
+
+### What Is This?
 
 Brain-AI v4.0 is a **production-ready C++ cognitive architecture** that enhances vector search with:
 - 🧠 Episodic memory (conversation context)

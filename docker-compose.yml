@@ -68,6 +68,26 @@ services:
       timeout: 5s
       retries: 3
 
+  gui:
+    build:
+      context: .
+      dockerfile: Dockerfile.gui
+      cache_from:
+        - type=local,src=/tmp/.buildx-cache
+    ports:
+      - "3000:3000"
+    depends_on:
+      rest:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    environment:
+      - NODE_ENV=production
+
   seed:
     image: curlimages/curl:8.10.1
     depends_on:
