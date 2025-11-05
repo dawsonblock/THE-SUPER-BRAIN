@@ -123,7 +123,7 @@ fi
 cd ..
 
 # Step 6: Create data directories
-mkdir -p data
+mkdir -p data logs
 info "Data directories ready"
 
 # Step 7: Start services
