@@ -542,7 +542,13 @@ OCRResult OCRClient::parse_response(const std::string& json_str) {
         result.text = json.value("text", "");
         result.confidence = json.value("confidence", 0.0f);
         result.success = json.value("success", false);
-        result.error_message = json.value("error_message", "");
+        
+        // Handle error_message which can be null
+        if (json.contains("error_message") && !json["error_message"].is_null()) {
+            result.error_message = json["error_message"].get<std::string>();
+        } else {
+            result.error_message = "";
+        }
         
         if (json.contains("metadata")) {
             result.metadata = json["metadata"];
