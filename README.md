@@ -37,11 +37,12 @@ cd brain-ai/build && ctest  # Full test suite
 ```
 
 **Access Points:**
-- 🌐 GUI: http://localhost:3000
-- 🔌 REST API: http://localhost:5001
-- 📄 API Docs: http://localhost:5001/docs
-- 📊 Metrics: http://localhost:5001/metrics
-- 🔍 OCR Service: http://localhost:8000
+
+- 🌐 GUI: <http://localhost:3000>
+- 🔌 REST API: <http://localhost:5001>
+- 📄 API Docs: <http://localhost:5001/docs>
+- 📊 Metrics: <http://localhost:5001/metrics>
+- 🔍 OCR Service: <http://localhost:8000>
 
 ---
 
@@ -99,6 +100,7 @@ A complete AI-powered knowledge system featuring:
 ### Core Capabilities
 
 #### Vector Search & Indexing
+
 - **HNSW Algorithm**: Hierarchical Navigable Small World graphs for fast ANN search
 - **Multi-dimensional**: Support for 384/768/1536-dim embeddings
 - **Metadata Filtering**: Rich metadata support with filtering capabilities
@@ -106,6 +108,7 @@ A complete AI-powered knowledge system featuring:
 - **Thread-safe**: Concurrent read/write operations with mutex protection
 
 #### LLM Integration
+
 - **DeepSeek AI**: Integration with DeepSeek R1, Chat, and V3 models
 - **Retry Logic**: Exponential backoff with jitter for reliability
 - **Streaming**: Real-time response streaming for better UX
@@ -113,6 +116,7 @@ A complete AI-powered knowledge system featuring:
 - **Fallback**: Graceful degradation when LLM unavailable
 
 #### Multi-Agent RAG
+
 - **Solver Agents**: 3+ independent agents for diverse perspectives
 - **Confidence Voting**: Weighted voting based on agent confidence
 - **Re-ranking**: Cross-encoder for precision refinement
@@ -120,6 +124,7 @@ A complete AI-powered knowledge system featuring:
 - **Hallucination Detection**: Multi-layer verification system
 
 #### Document Processing
+
 - **OCR Integration**: DeepSeek-OCR for document text extraction
 - **Multi-format**: Support for images, PDFs, and text documents
 - **Batch Processing**: Efficient batch document indexing
@@ -129,6 +134,7 @@ A complete AI-powered knowledge system featuring:
 ### Production Features
 
 #### Monitoring & Observability
+
 - **Health Checks**: `/healthz`, `/readyz` endpoints with dependency checks
 - **Metrics**: Prometheus-compatible metrics export at `/metrics`
 - **Structured Logging**: JSON logs with correlation IDs
@@ -136,6 +142,7 @@ A complete AI-powered knowledge system featuring:
 - **Resource Monitoring**: Memory, CPU, disk usage tracking
 
 #### Security & Reliability
+
 - **API Authentication**: Key-based authentication for write operations
 - **CORS Protection**: Configurable origin whitelist
 - **Rate Limiting**: Per-client request throttling
@@ -144,6 +151,7 @@ A complete AI-powered knowledge system featuring:
 - **Kill Switch**: Emergency shutdown capability
 
 #### Deployment & Scaling
+
 - **Docker Support**: Multi-container orchestration with docker-compose
 - **Automated Deployment**: One-command deployment script
 - **Environment Management**: Dev/staging/production configurations
@@ -153,6 +161,7 @@ A complete AI-powered knowledge system featuring:
 ### User Interface
 
 #### Modern React GUI
+
 - **Chat Interface**: Real-time Q&A with streaming responses
 - **Document Upload**: Drag-and-drop batch indexing with progress
 - **Search Console**: Advanced search with filters and facets
@@ -166,7 +175,7 @@ A complete AI-powered knowledge system featuring:
 
 ### System Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Users / Clients                          │
 └────────────────────┬────────────────────────────────────────┘
@@ -215,6 +224,7 @@ A complete AI-powered knowledge system featuring:
 ### Component Details
 
 #### C++ Core (`brain-ai/`)
+
 - **Language**: C++17
 - **Build System**: CMake 3.22+
 - **Dependencies**: OpenSSL, nlohmann/json, pybind11
@@ -222,6 +232,7 @@ A complete AI-powered knowledge system featuring:
 - **Performance**: <50ms p95 query latency
 
 **Key Classes:**
+
 - `IndexManager`: Thread-safe HNSW index management
 - `CognitiveHandler`: Multi-agent orchestration
 - `EpisodicMemory`: Document-level memory
@@ -229,6 +240,7 @@ A complete AI-powered knowledge system featuring:
 - `OCRClient`: HTTP client for OCR service
 
 #### Python REST Service (`brain-ai-rest-service/`)
+
 - **Framework**: FastAPI 0.115.5
 - **Server**: Uvicorn 0.32.1
 - **Validation**: Pydantic 2.10.3
@@ -236,12 +248,14 @@ A complete AI-powered knowledge system featuring:
 - **Monitoring**: prometheus-client 0.21.0
 
 **Key Modules:**
+
 - `app.py`: Main FastAPI application
 - `config.py`: Configuration management
 - `metrics.py`: Prometheus metrics
 - `middleware.py`: CORS, logging, observability
 
 #### React GUI (`brain-ai-gui/`)
+
 - **Framework**: React 18.3.1
 - **Language**: TypeScript 5.7.2
 - **Build Tool**: Vite 6.0.1
@@ -250,6 +264,7 @@ A complete AI-powered knowledge system featuring:
 - **Icons**: Lucide React 0.552.0
 
 #### OCR Service (`brain-ai/deepseek-ocr-service/`)
+
 - **Framework**: FastAPI
 - **Model**: DeepSeek-OCR (with mock mode)
 - **Features**: Multi-resolution, task-specific processing
@@ -271,17 +286,20 @@ A complete AI-powered knowledge system featuring:
 ### System Dependencies
 
 **macOS:**
+
 ```bash
 brew install cmake openssl python@3.12 node
 ```
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt-get update
 sudo apt-get install build-essential cmake libssl-dev python3.12 python3-pip nodejs npm
 ```
 
 **Arch Linux:**
+
 ```bash
 sudo pacman -S base-devel cmake openssl python nodejs npm
 ```
@@ -289,12 +307,14 @@ sudo pacman -S base-devel cmake openssl python nodejs npm
 ### Build from Source
 
 #### 1. Clone Repository
+
 ```bash
 git clone https://github.com/yourusername/C-AI-BRAIN.git
 cd C-AI-BRAIN
 ```
 
 #### 2. Build C++ Core
+
 ```bash
 cd brain-ai
 ./build.sh
@@ -306,6 +326,7 @@ cd ..
 ```
 
 #### 3. Install Python Dependencies
+
 ```bash
 cd brain-ai-rest-service
 pip3 install -r requirements.txt
@@ -317,6 +338,7 @@ cd ../..
 ```
 
 #### 4. Install GUI Dependencies
+
 ```bash
 cd brain-ai-gui
 npm install
@@ -347,6 +369,7 @@ docker-compose down
 ### Starting Services
 
 #### Option 1: Automated Deployment (Recommended)
+
 ```bash
 # Development mode (with mock OCR)
 ./deploy.sh development
@@ -361,6 +384,7 @@ SKIP_TESTS=true ./deploy.sh development
 #### Option 2: Manual Start
 
 **Terminal 1 - OCR Service:**
+
 ```bash
 cd brain-ai/deepseek-ocr-service
 DEEPSEEK_OCR_MOCK_MODE=true \
@@ -368,6 +392,7 @@ DEEPSEEK_OCR_MOCK_MODE=true \
 ```
 
 **Terminal 2 - REST API:**
+
 ```bash
 cd brain-ai-rest-service
 REQUIRE_API_KEY_FOR_WRITES=false \
@@ -377,6 +402,7 @@ REQUIRE_API_KEY_FOR_WRITES=false \
 ```
 
 **Terminal 3 - GUI (Optional):**
+
 ```bash
 cd brain-ai-gui
 npm run dev
@@ -385,6 +411,7 @@ npm run dev
 ### Basic Operations
 
 #### Index a Document
+
 ```bash
 curl -X POST http://localhost:5001/index \
   -H "Content-Type: application/json" \
@@ -396,6 +423,7 @@ curl -X POST http://localhost:5001/index \
 ```
 
 #### Query the System
+
 ```bash
 curl -X POST http://localhost:5001/query \
   -H "Content-Type: application/json" \
@@ -406,6 +434,7 @@ curl -X POST http://localhost:5001/query \
 ```
 
 #### Get Answer with RAG
+
 ```bash
 curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
@@ -417,6 +446,7 @@ curl -X POST http://localhost:5001/answer \
 ```
 
 #### Health Check
+
 ```bash
 curl http://localhost:5001/healthz
 ```
@@ -489,30 +519,35 @@ manager.save_to("./data/index.bin")
 #### Health & Status
 
 **GET /healthz**
+
 - Returns service health status
 - Response: `{"ok": true, "version": "4.5.0"}`
 
 **GET /readyz**
+
 - Returns readiness status with dependencies
 - Response: `{"ready": true, "checks": {...}}`
 
 **GET /metrics**
+
 - Prometheus-compatible metrics
 - Format: OpenMetrics text format
 
 #### Document Operations
 
 **POST /index**
+
 ```json
 {
   "doc_id": "string",
   "text": "string",
   "metadata": {"key": "value"},
-  "embedding": [0.1, 0.2, ...]  // optional
+  "embedding": [0.1, 0.2, ...]
 }
 ```
 
 **POST /batch_index**
+
 ```json
 {
   "documents": [
@@ -523,11 +558,13 @@ manager.save_to("./data/index.bin")
 ```
 
 **DELETE /document/{doc_id}**
+
 - Removes document from index
 
 #### Query Operations
 
 **POST /query**
+
 ```json
 {
   "query": "string",
@@ -537,6 +574,7 @@ manager.save_to("./data/index.bin")
 ```
 
 **POST /answer**
+
 ```json
 {
   "question": "string",
@@ -547,6 +585,7 @@ manager.save_to("./data/index.bin")
 ```
 
 **POST /rerank**
+
 ```json
 {
   "query": "string",
@@ -560,6 +599,7 @@ manager.save_to("./data/index.bin")
 #### Environment Variables
 
 **REST Service:**
+
 - `SAFE_MODE`: Enable safe mode (default: true)
 - `LLM_STUB`: Use LLM stub for testing (default: false)
 - `REQUIRE_API_KEY_FOR_WRITES`: Require API key for writes (default: true)
@@ -568,6 +608,7 @@ manager.save_to("./data/index.bin")
 - `CORS_ORIGINS`: Comma-separated allowed origins
 
 **OCR Service:**
+
 - `DEEPSEEK_OCR_MOCK_MODE`: Enable mock mode (default: false)
 - `DEEPSEEK_OCR_MODEL_PATH`: Path to OCR model
 - `DEEPSEEK_OCR_USE_VLLM`: Use vLLM backend (default: true)
@@ -578,12 +619,13 @@ manager.save_to("./data/index.bin")
 
 ### Test Suite Overview
 
-```
+```text
 100% tests passed, 0 tests failed out of 6
 Total Test time: 3.39 sec
 ```
 
 **Test Suites:**
+
 1. ✅ BrainAITests (0.14s) - Core functionality
 2. ✅ MonitoringTests (0.06s) - Metrics and health checks
 3. ✅ ResilienceTests (0.41s) - Error handling and recovery
@@ -594,17 +636,20 @@ Total Test time: 3.39 sec
 ### Running Tests
 
 #### Quick Smoke Test
+
 ```bash
 ./test_smoke.sh
 ```
 
 #### Full C++ Test Suite
+
 ```bash
 cd brain-ai/build
 ctest --output-on-failure
 ```
 
 #### Individual Test Suites
+
 ```bash
 cd brain-ai/build
 ./tests/brain_ai_tests
@@ -613,12 +658,14 @@ cd brain-ai/build
 ```
 
 #### Python Tests
+
 ```bash
 cd brain-ai-rest-service
 pytest tests/
 ```
 
 #### GUI Tests
+
 ```bash
 cd brain-ai-gui
 npm test
@@ -638,6 +685,7 @@ npm test
 ### Production Deployment
 
 #### Using Deployment Script
+
 ```bash
 # Production deployment with all checks
 ./deploy.sh production
@@ -650,6 +698,7 @@ SKIP_BUILD=true ./deploy.sh production
 ```
 
 #### Docker Deployment
+
 ```bash
 # Build and start
 docker-compose -f docker-compose.prod.yml up -d
@@ -664,6 +713,7 @@ docker-compose -f docker-compose.prod.yml up -d --build
 ### Environment Configuration
 
 #### Development
+
 ```bash
 DEEPSEEK_OCR_MOCK_MODE=true
 REQUIRE_API_KEY_FOR_WRITES=false
@@ -672,6 +722,7 @@ LLM_STUB=true
 ```
 
 #### Staging
+
 ```bash
 DEEPSEEK_OCR_MOCK_MODE=false
 REQUIRE_API_KEY_FOR_WRITES=true
@@ -681,6 +732,7 @@ DEEPSEEK_API_KEY=<your-key>
 ```
 
 #### Production
+
 ```bash
 DEEPSEEK_OCR_MOCK_MODE=false
 REQUIRE_API_KEY_FOR_WRITES=true
@@ -694,6 +746,7 @@ CORS_ORIGINS=https://yourdomain.com
 ### Monitoring
 
 #### Prometheus Metrics
+
 ```bash
 # Scrape metrics
 curl http://localhost:5001/metrics
@@ -706,6 +759,7 @@ curl http://localhost:5001/metrics
 ```
 
 #### Health Checks
+
 ```bash
 # Liveness probe
 curl http://localhost:5001/healthz
@@ -715,6 +769,7 @@ curl http://localhost:5001/readyz
 ```
 
 #### Logs
+
 ```bash
 # Docker logs
 docker-compose logs -f rest-api
@@ -742,18 +797,21 @@ tail -f /tmp/ocr_service.log
 ### Optimization Tips
 
 #### C++ Core
+
 - Use appropriate `M` and `ef_construction` for HNSW
 - Enable compiler optimizations (`-O3`)
 - Use memory pooling for frequent allocations
 - Profile with `perf` or `valgrind`
 
 #### Python Service
+
 - Enable uvicorn workers for concurrency
 - Use connection pooling for external services
 - Implement caching for frequent queries
 - Monitor with Prometheus
 
 #### Database
+
 - Regular index optimization
 - Appropriate embedding dimensions
 - Metadata indexing for filters
@@ -778,8 +836,9 @@ tail -f /tmp/ocr_service.log
 ### API Documentation
 
 Interactive API documentation available at:
-- Swagger UI: http://localhost:5001/docs
-- ReDoc: http://localhost:5001/redoc
+
+- Swagger UI: <http://localhost:5001/docs>
+- ReDoc: <http://localhost:5001/redoc>
 
 ---
 
@@ -788,6 +847,7 @@ Interactive API documentation available at:
 ### Common Issues
 
 #### Services Won't Start
+
 ```bash
 # Check ports
 lsof -i :8000
@@ -802,6 +862,7 @@ tail -f /tmp/rest_service.log
 ```
 
 #### Tests Failing
+
 ```bash
 # Clean rebuild
 cd brain-ai
@@ -814,6 +875,7 @@ curl http://localhost:5001/healthz
 ```
 
 #### Build Errors
+
 ```bash
 # Update dependencies
 pip3 install --upgrade -r requirements.txt
@@ -825,6 +887,7 @@ cmake --version  # Should be 3.22+
 ```
 
 #### Performance Issues
+
 ```bash
 # Check resource usage
 docker stats
@@ -899,7 +962,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Last Updated**: November 6, 2025  
 **Test Coverage**: 100% (6/6 test suites passing)  
 **Build Status**: ✅ Passing  
-**Documentation**: ✅ Complete  
+**Documentation**: ✅ Complete
 
 ### Recent Updates (v4.5.0)
 
@@ -913,12 +976,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Roadmap
 
 **v4.6.0** (Planned)
+
 - Advanced caching with Redis
 - Distributed tracing with OpenTelemetry
 - Load testing infrastructure
 - CI/CD pipeline with GitHub Actions
 
 **v5.0.0** (Future)
+
 - Multi-region deployment support
 - Advanced ML features
 - Breaking API improvements
