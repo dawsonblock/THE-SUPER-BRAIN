@@ -151,8 +151,7 @@ PYBIND11_MODULE(brain_ai_py, m) {
         }, "Get system statistics")
         
         .def("clear_episodic_buffer", [](CognitiveHandler& h) {
-            // Access through public interface
-            // Note: May need to add clear method to EpisodicBuffer
+            h.episodic_buffer().clear();
         }, "Clear episodic buffer")
         
         .def("episodic_buffer_size", &CognitiveHandler::episodic_buffer_size,
@@ -163,7 +162,7 @@ PYBIND11_MODULE(brain_ai_py, m) {
              "Get vector index document count");
     
     // Version info
-    m.attr("__version__") = "4.3.0";
+    m.attr("__version__") = "4.5.0";
     m.attr("__author__") = "Brain-AI Team";
 }
 
