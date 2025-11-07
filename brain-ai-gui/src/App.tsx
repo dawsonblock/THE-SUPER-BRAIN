@@ -67,8 +67,9 @@ function Navigation() {
 
       <div className="p-4 border-t border-gray-200">
         <div className="text-xs text-gray-500">
-          <p>Version 3.0.0</p>
+          <p>Version 4.5.0</p>
           <p>RAG++ Production</p>
+          <p className="text-green-600 font-semibold mt-1">✨ Optimized</p>
         </div>
       </div>
     </nav>

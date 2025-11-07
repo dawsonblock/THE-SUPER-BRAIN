@@ -3,7 +3,6 @@ import sqlite3
 import json
 import hashlib
 from typing import List, Dict, Optional
-from datetime import datetime
 from pathlib import Path
 import logging
 import numpy as np
@@ -198,6 +197,74 @@ class FactsStore:
         # Normalize: lowercase, strip, collapse whitespace
         normalized = " ".join(question.lower().strip().split())
         return hashlib.sha256(normalized.encode()).hexdigest()
+    
+    def _fuzzy_lookup(self, question: str, threshold: float) -> Optional[Dict]:
+        """
+        Fuzzy lookup using embedding similarity
+        
+        Args:
+            question: Question to match
+            threshold: Similarity threshold (0.0-1.0)
+        
+        Returns:
+            Best matching fact or None
+        """
+        try:
+            # Import here to avoid circular dependency
+            from app.embeddings import embed_text
+            
+            # Get query embedding
+            q_embedding = embed_text(question)
+            
+            # Get all cached questions
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.execute("""
+                SELECT question, answer, citations, confidence,
+                       access_count, verified_at, source, model
+                FROM facts
+            """)
+            
+            best_match = None
+            best_similarity = 0.0
+            
+            for row in cursor:
+                cached_question = row[0]
+                
+                # Get embedding for cached question
+                cached_embedding = embed_text(cached_question)
+                
+                # Compute cosine similarity
+                similarity = float(np.dot(q_embedding, cached_embedding))
+                
+                if similarity > threshold and similarity > best_similarity:
+                    best_similarity = similarity
+                    best_match = {
+                        "question": row[0],
+                        "answer": row[1],
+                        "citations": json.loads(row[2]),
+                        "confidence": row[3],
+                        "access_count": row[4],
+                        "verified_at": row[5],
+                        "source": row[6],
+                        "model": row[7],
+                        "cached": True,
+                        "match_type": "fuzzy",
+                        "similarity": best_similarity
+                    }
+            
+            conn.close()
+            
+            if best_match:
+                # Update access stats for fuzzy match
+                q_hash = self._hash_question(best_match["question"])
+                self._update_access(q_hash)
+                logger.info(f"Fuzzy match found with similarity {best_similarity:.3f}")
+            
+            return best_match
+            
+        except Exception as e:
+            logger.error(f"Fuzzy lookup failed: {e}")
+            return None
     
     def get_stats(self) -> Dict:
         """Get store statistics"""

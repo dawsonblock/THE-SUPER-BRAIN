@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include <filesystem>
 #include "cognitive_handler.hpp"
 #include "document/document_processor.hpp"
 #include "indexing/index_manager.hpp"
@@ -129,18 +130,33 @@ PYBIND11_MODULE(brain_ai_py, m) {
              "Add episode to episodic memory")
         
         .def("save", [](CognitiveHandler& h, const std::string& path) {
-            // TODO: Implement full serialization
-            // For now, just save vector index
-            return h.vector_index().save(path + "/vector_index.bin");
+            // Create directory if it doesn't exist
+            std::filesystem::create_directories(path);
+            
+            // Save vector index (primary component)
+            bool success = h.vector_index().save(path + "/vector_index.bin");
+            
+            // TODO: Add episodic_buffer.save() and semantic_network.save()
+            // when those classes implement persistence methods
+            // success &= h.episodic_buffer().save(path + "/episodic_buffer.bin");
+            // success &= h.semantic_network().save(path + "/semantic_network.bin");
+            
+            return success;
         }, py::arg("path"),
-        "Save cognitive handler state to disk")
+        "Save cognitive handler state to disk (vector index + future: episodic/semantic)")
         
         .def("load", [](CognitiveHandler& h, const std::string& path) {
-            // TODO: Implement full deserialization
-            // For now, just load vector index
-            return h.vector_index().load(path + "/vector_index.bin");
+            // Load vector index (primary component)
+            bool success = h.vector_index().load(path + "/vector_index.bin");
+            
+            // TODO: Add episodic_buffer.load() and semantic_network.load()
+            // when those classes implement persistence methods
+            // success &= h.episodic_buffer().load(path + "/episodic_buffer.bin");
+            // success &= h.semantic_network().load(path + "/semantic_network.bin");
+            
+            return success;
         }, py::arg("path"),
-        "Load cognitive handler state from disk")
+        "Load cognitive handler state from disk (vector index + future: episodic/semantic)")
         
         .def("get_stats", [](const CognitiveHandler& h) {
             py::dict stats;

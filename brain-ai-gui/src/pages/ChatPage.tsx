@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { Send, Loader2, CheckCircle, XCircle, Zap, Target } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Send, Loader2, CheckCircle, XCircle, Zap, Target, Upload, Sparkles, Settings, Trash2, AlertCircle } from 'lucide-react';
 import apiClient from '@/lib/api';
 import { formatLatency, formatConfidence, getConfidenceBadgeClass, cn } from '@/lib/utils';
 import type { QueryResponse } from '@/types';
@@ -17,6 +17,30 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<'fast' | 'accuracy'>('fast');
+  const [showSettings, setShowSettings] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [settings, setSettings] = useState({
+    enableFuzzyCache: true,
+    enableVerification: true,
+    confidenceThreshold: 0.70,
+    fuzzyThreshold: 0.85,
+    topK: 5,
+  });
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Fetch stats
+  const { data: stats } = useQuery({
+    queryKey: ['stats'],
+    queryFn: () => apiClient.getStats(),
+    refetchInterval: 30000, // Refresh every 30s
+  });
 
   const queryMutation = useMutation({
     mutationFn: apiClient.query,

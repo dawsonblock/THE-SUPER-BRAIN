@@ -6,6 +6,11 @@
 #include <algorithm>
 #include <iostream>
 
+// cpp-httplib for HTTP client
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include "httplib.h"
+#include "nlohmann/json.hpp"
+
 // Logger placeholder (replace with full logging system if available)
 namespace Logger {
     inline void info(const std::string& component, const std::string& message) {
@@ -312,12 +317,37 @@ std::string DocumentProcessor::generate_doc_id(const std::string& filepath) {
 }
 
 std::vector<float> DocumentProcessor::generate_embedding(const std::string& text) {
-    // TODO: Call external embedding service (OpenAI, HuggingFace, etc.)
-    // For now, generate random embedding for testing
+    // Try to call Python embedding service via HTTP
+    try {
+        httplib::Client cli("http://localhost", 5001);
+        cli.set_connection_timeout(5, 0);  // 5 seconds timeout
+        
+        nlohmann::json request_body;
+        request_body["text"] = text;
+        
+        auto res = cli.Post("/embed", request_body.dump(), "application/json");
+        
+        if (res && res->status == 200) {
+            auto response_json = nlohmann::json::parse(res->body);
+            
+            if (response_json.contains("embedding")) {
+                auto embedding = response_json["embedding"].get<std::vector<float>>();
+                Logger::info("DocumentProcessor", "Got embedding from service");
+                return embedding;
+            }
+        }
+        
+        Logger::warn("DocumentProcessor", "Embedding service unavailable, using fallback");
+        
+    } catch (const std::exception& e) {
+        Logger::warn("DocumentProcessor", 
+                    std::string("Embedding service error: ") + e.what() + ", using fallback");
+    }
     
+    // Fallback: generate deterministic random embedding for testing
     Logger::warn("DocumentProcessor", "Using stub embedding generation (random)");
     
-    const size_t embedding_dim = 1536;  // OpenAI ada-002 dimension
+    const size_t embedding_dim = 384;  // sentence-transformers dimension
     std::vector<float> embedding(embedding_dim);
     
     // Use text hash as seed for reproducibility
