@@ -3,6 +3,7 @@
 #include <sstream>
 #include <random>
 #include <thread>
+#include <future>
 #include <cstring>
 #include <iostream>
 #include <regex>
@@ -401,10 +402,30 @@ std::vector<OCRResult> OCRClient::process_batch(const std::vector<std::string>& 
     std::vector<OCRResult> results;
     results.reserve(filepaths.size());
     
-    // Process each file sequentially
-    // TODO: Could parallelize with thread pool for better performance
-    for (const auto& filepath : filepaths) {
-        results.push_back(process_file(filepath));
+    // Process files in parallel for better performance
+    // Use thread pool with max 4 concurrent requests to avoid overwhelming the service
+    const size_t max_threads = std::min(size_t(4), filepaths.size());
+    
+    if (max_threads > 1 && filepaths.size() > 1) {
+        // Parallel processing using futures
+        std::vector<std::future<OCRResult>> futures;
+        futures.reserve(filepaths.size());
+        
+        for (const auto& filepath : filepaths) {
+            futures.push_back(std::async(std::launch::async, 
+                [this, filepath]() { return process_file(filepath); }
+            ));
+        }
+        
+        // Collect results in order
+        for (auto& future : futures) {
+            results.push_back(future.get());
+        }
+    } else {
+        // Sequential processing for single file or when parallelization disabled
+        for (const auto& filepath : filepaths) {
+            results.push_back(process_file(filepath));
+        }
     }
     
     size_t success_count = 0;

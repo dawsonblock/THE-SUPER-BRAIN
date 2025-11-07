@@ -6,6 +6,7 @@ from typing import List, Dict, Optional
 from datetime import datetime
 from pathlib import Path
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -124,14 +125,16 @@ class FactsStore:
     def lookup(
         self, 
         question: str, 
-        fuzzy_match: bool = False
+        fuzzy_match: bool = False,
+        threshold: float = 0.85
     ) -> Optional[Dict]:
         """
         Lookup fact by question
         
         Args:
             question: Question to look up
-            fuzzy_match: Enable fuzzy matching (slower, not yet implemented)
+            fuzzy_match: Enable fuzzy matching using embeddings
+            threshold: Similarity threshold for fuzzy matching (0.0-1.0)
         
         Returns:
             Dict with question, answer, citations, confidence, etc. or None
@@ -162,12 +165,15 @@ class FactsStore:
                 "verified_at": row[5],
                 "source": row[6],
                 "model": row[7],
-                "cached": True
+                "cached": True,
+                "match_type": "exact"
             }
         
-        # TODO: Implement fuzzy matching using embeddings
+        # Fuzzy matching using embeddings
         if fuzzy_match:
-            logger.warning("Fuzzy matching not yet implemented")
+            fuzzy_result = self._fuzzy_lookup(question, threshold)
+            if fuzzy_result:
+                return fuzzy_result
         
         return None
     
