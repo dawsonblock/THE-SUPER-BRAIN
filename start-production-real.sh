@@ -46,18 +46,17 @@ echo ""
 echo -e "${BLUE}Starting services with REAL DeepSeek API...${NC}"
 echo ""
 
-# Start OCR Service (with real API)
-echo "Starting OCR Service..."
+# Start OCR Service (in mock mode - real OCR requires GPU)
+echo "Starting OCR Service (mock mode)..."
 cd brain-ai/deepseek-ocr-service
-DEEPSEEK_OCR_MOCK_MODE=false \
-  DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY \
+DEEPSEEK_OCR_MOCK_MODE=true \
   python3 -m uvicorn app.main:app \
   --host 0.0.0.0 \
   --port 8000 \
-  --workers 2 \
+  --workers 1 \
   > ../../logs/ocr-service.log 2>&1 &
 OCR_PID=$!
-echo -e "${GREEN}✅ OCR Service started (PID: $OCR_PID)${NC}"
+echo -e "${GREEN}✅ OCR Service started in mock mode (PID: $OCR_PID)${NC}"
 cd ../..
 
 # Wait for OCR
