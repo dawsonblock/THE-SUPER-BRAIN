@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Upload, Loader2, CheckCircle, XCircle, AlertCircle, Sparkles, FileText, Image as ImageIcon, Trash2, Settings, Brain } from 'lucide-react';
+import { Send, Upload, Loader2, CheckCircle, XCircle, AlertCircle, Sparkles, FileText, Trash2, Settings, Brain } from 'lucide-react';
 import axios from 'axios';
 
 interface Message {
@@ -29,7 +29,7 @@ interface SystemStats {
   avgResponseTime: number;
 }
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
