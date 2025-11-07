@@ -89,13 +89,8 @@ export const ChatInterface: React.FC = () => {
 
     try {
       const response = await axios.post(`${API_URL}/answer`, {
-        question: input,
+        query: input,  // Changed from 'question' to 'query' to match API schema
         top_k: settings.topK,
-        enable_verification: settings.enableVerification,
-        enable_fuzzy_cache: settings.enableFuzzyCache,
-        confidence_threshold: settings.confidenceThreshold,
-        fuzzy_threshold: settings.fuzzyThreshold,
-        use_multi_agent: settings.useMultiAgent, // Deep Think mode
       });
 
       const assistantMessage: Message = {
@@ -103,12 +98,9 @@ export const ChatInterface: React.FC = () => {
         role: 'assistant',
         content: response.data.answer,
         timestamp: new Date(),
-        confidence: response.data.confidence,
-        citations: response.data.citations,
-        cached: response.data.cached,
-        matchType: response.data.match_type,
-        similarity: response.data.similarity,
-        processingTime: response.data.processing_time_ms,
+        confidence: response.data.confidence || 0.75,
+        citations: response.data.hits || [],  // API returns 'hits' not 'citations'
+        processingTime: response.data.latency_ms,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
