@@ -1,0 +1,32 @@
+[Unit]
+Description=Brain-AI REST API Service
+After=network.target brain-ai-ocr.service
+Requires=brain-ai-ocr.service
+
+[Service]
+Type=simple
+User=brain-ai
+Group=brain-ai
+WorkingDirectory=/opt/brain-ai/brain-ai-rest-service
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+EnvironmentFile=/opt/brain-ai/.env.production
+ExecStart=/usr/bin/python3 -m uvicorn app.app:app \
+    --host 0.0.0.0 \
+    --port 5001 \
+    --workers 4 \
+    --log-level info
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/brain-ai/data
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # OCR Service
+  ocr-service:
+    build:
+      context: ./brain-ai/deepseek-ocr-service
+      dockerfile: Dockerfile
+    container_name: brain-ai-ocr-prod
+    ports:
+      - "8000:8000"
+    environment:
+      - DEEPSEEK_OCR_MOCK_MODE=true
+      - HOST=0.0.0.0
+      - PORT=8000
+      - WORKERS=2
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - brain-ai-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # REST API Service
+  api-service:
+    build:
+      context: ./brain-ai-rest-service
+      dockerfile: Dockerfile
+    container_name: brain-ai-api-prod
+    ports:
+      - "5001:5001"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5001
+      - WORKERS=4
+      - REQUIRE_API_KEY_FOR_WRITES=false
+      - SAFE_MODE=false
+      - LLM_STUB=false
+      - OCR_SERVICE_URL=http://ocr-service:8000
+    depends_on:
+      ocr-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - brain-ai-network
+    volumes:
+      - brain-ai-data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # GUI Service (Nginx)
+  gui-service:
+    image: nginx:alpine
+    container_name: brain-ai-gui-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./brain-ai-gui/dist:/usr/share/nginx/html:ro
+      - ./nginx.production.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api-service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - brain-ai-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  brain-ai-network:
+    driver: bridge
+
+volumes:
+  brain-ai-data:
+    driver: local

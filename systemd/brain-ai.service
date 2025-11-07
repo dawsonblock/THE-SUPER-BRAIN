@@ -1,0 +1,13 @@
+[Unit]
+Description=Brain-AI RAG++ System
+After=network.target
+Wants=brain-ai-ocr.service brain-ai-api.service brain-ai-gui.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/bin/true
+
+[Install]
+WantedBy=multi-user.target
