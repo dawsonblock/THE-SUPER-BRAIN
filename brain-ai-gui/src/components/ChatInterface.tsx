@@ -82,6 +82,21 @@ export const ChatInterface: React.FC = () => {
     }
   };
 
+  const getWriteAuthHeaders = () => {
+    const apiKey =
+      localStorage.getItem('apiKey') ||
+      localStorage.getItem('API_KEY') ||
+      localStorage.getItem('x-api-key');
+
+    if (!apiKey) {
+      throw new Error('Missing write API key. Configure an API key in localStorage (apiKey, API_KEY, or x-api-key) before uploading files.');
+    }
+
+    return {
+      'X-API-Key': apiKey,
+    };
+  };
+
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -134,6 +149,8 @@ export const ChatInterface: React.FC = () => {
     setUploadProgress(0);
 
     try {
+      const headers = getWriteAuthHeaders();
+
       // Index each file individually via the canonical /index endpoint.
       // Files are read as text; binary/PDF content will be indexed as-is
       // until a dedicated upload pipeline is implemented.
@@ -143,6 +160,8 @@ export const ChatInterface: React.FC = () => {
         await axios.post(`${API_URL}/index`, {
           doc_id: `upload-${file.name}-${Date.now()}`,
           text,
+        }, {
+          headers,
         });
         indexed += 1;
         setUploadProgress(Math.round((indexed / files.length) * 100));
