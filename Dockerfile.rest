@@ -40,21 +40,22 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN adduser --uid 1001 --disabled-password --gecos "" brain
 WORKDIR /srv/app
 
-# Copy optional native module — silently skip if not built
+# Copy optional native module build output
 COPY --from=builder /opt/build/brain-ai/build/python /srv/app/native_build
-RUN set -e; \
-    if ls /srv/app/native_build/brain_ai_core*.so >/dev/null 2>&1; then \
-        cp /srv/app/native_build/brain_ai_core*.so /srv/app/brain-ai-rest-service/ && \
-        echo "brain_ai_core native module installed (optional acceleration)"; \
-    else \
-        echo "brain_ai_core not built — service will use pure-Python fallback (this is normal)"; \
-    fi
 
 COPY brain-ai-rest-service/requirements.txt /tmp/requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir --disable-pip-version-check -r /tmp/requirements.txt
 
 COPY brain-ai-rest-service /srv/app/brain-ai-rest-service
+RUN set -e; \
+    mkdir -p /srv/app/brain-ai-rest-service; \
+    if ls /srv/app/native_build/brain_ai_core*.so >/dev/null 2>&1; then \
+        cp /srv/app/native_build/brain_ai_core*.so /srv/app/brain-ai-rest-service/ && \
+        echo "brain_ai_core native module installed (optional acceleration)"; \
+    else \
+        echo "brain_ai_core not built — service will use pure-Python fallback (this is normal)"; \
+    fi
 WORKDIR /srv/app/brain-ai-rest-service
 
 # Default dev-safe environment; override at runtime for production
