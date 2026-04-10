@@ -33,7 +33,7 @@ echo -e "${GREEN}✅ DeepSeek API key configured${NC}"
 # Stop any existing services
 echo ""
 echo -e "${BLUE}Stopping existing services...${NC}"
-pkill -f "uvicorn.*8000" 2>/dev/null || true
+pkill -f "uvicorn.*6001" 2>/dev/null || true
 pkill -f "uvicorn.*5001" 2>/dev/null || true
 pkill -f "vite.*3000" 2>/dev/null || true
 sleep 2
@@ -50,9 +50,9 @@ echo ""
 echo "Starting OCR Service (mock mode)..."
 cd brain-ai/deepseek-ocr-service
 DEEPSEEK_OCR_MOCK_MODE=true \
-  python3 -m uvicorn app.app_v2:app \
+  python3 -m uvicorn app.main:app \
   --host 0.0.0.0 \
-  --port 8000 \
+  --port 6001 \
   --workers 1 \
   > ../../logs/ocr-service.log 2>&1 &
 OCR_PID=$!
@@ -108,7 +108,7 @@ echo -e "${BLUE}Running health checks...${NC}"
 
 # Check OCR
 echo -n "OCR Service: "
-if curl -s http://localhost:6001/ocr > /dev/null; then
+if curl -sf http://localhost:6001/health > /dev/null; then
     echo -e "${GREEN}✅ Healthy${NC}"
 else
     echo -e "${YELLOW}⚠️  Not responding${NC}"

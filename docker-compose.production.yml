@@ -16,7 +16,7 @@ services:
       - WORKERS=2
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf -X POST http://localhost:6001/ocr -F 'file=@/dev/null' >/dev/null || true"]
+      test: ["CMD", "curl", "-sf", "http://localhost:6001/health"]
       interval: 30s
       timeout: 10s
       retries: 3

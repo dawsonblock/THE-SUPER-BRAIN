@@ -63,7 +63,7 @@ services:
     ports:
       - "6001:6001"
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf -X POST http://localhost:6001/ocr -F 'file=@/dev/null' >/dev/null || true"]
+      test: ["CMD", "curl", "-sf", "http://localhost:6001/health"]
       interval: 15s
       timeout: 5s
       retries: 3

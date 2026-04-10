@@ -64,3 +64,9 @@ dist/
 *.tmp
 *.tmp.*
 .DS_Store
+
+# Runtime-generated index snapshots (do not commit; generated at runtime via INDEX_SNAPSHOT)
+data/index.json
+data/index.json.meta
+data/index.json.metadata.json
+data/facts.db

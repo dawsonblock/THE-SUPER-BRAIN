@@ -9,6 +9,12 @@ from fastapi import FastAPI, UploadFile
 app = FastAPI(title="OCR Stub")
 
 
+@app.get("/health")
+async def health() -> Dict[str, str]:
+    """Lightweight health endpoint used by Docker healthchecks and smoke probes."""
+    return {"status": "ok"}
+
+
 @app.post("/ocr")
 async def ocr_endpoint(file: UploadFile) -> Dict[str, object]:
     started = time.perf_counter()
