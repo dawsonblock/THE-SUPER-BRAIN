@@ -38,7 +38,7 @@ from .metrics import (
 from .prompts import apply_evidence_gate, enforce_json, make_messages
 from .rate_limiter import RateLimiter
 from .reranker import cross_encode_rerank, ensure_chunk_format
-from .schemas import AnswerResponse, IndexPayload, QueryPayload
+from .schemas import AnswerResponse, FactPayload, IndexPayload, QueryPayload
 from .verification import verify_answer
 
 LOGGER = logging.getLogger(__name__)
@@ -378,15 +378,15 @@ async def list_facts(request: Request, limit: int = 100) -> Dict[str, Any]:
 
 
 @app.post("/facts")
-async def upsert_fact(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
+async def upsert_fact(payload: FactPayload, request: Request) -> Dict[str, Any]:
     """Manually upsert a fact into the store."""
     _require_api_key(request)
     facts = get_facts_store()
     ok = facts.upsert(
-        question=payload["question"],
-        answer=payload["answer"],
-        citations=payload.get("citations", []),
-        confidence=float(payload.get("confidence", 0.9)),
+        question=payload.question,
+        answer=payload.answer,
+        citations=payload.citations,
+        confidence=float(payload.confidence),
     )
     return {"ok": ok}
 
