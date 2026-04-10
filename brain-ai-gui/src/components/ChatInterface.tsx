@@ -24,6 +24,7 @@ interface Citation {
 
 interface SystemStats {
   totalDocs: number;
+  totalFacts: number;
   cacheHitRate: number;
   avgConfidence: number;
   avgResponseTime: number;
@@ -67,9 +68,11 @@ export const ChatInterface: React.FC = () => {
   const fetchStats = async () => {
     try {
       const response = await axios.get(`${API_URL}/facts/stats`);
-      // Map canonical /facts/stats response to local SystemStats shape
+      // `/facts/stats` reports fact-store metrics, so map `count` to `totalFacts`.
+      // Reserve `totalDocs` for a dedicated document/index metric when available.
       setStats({
-        totalDocs: response.data.count ?? 0,
+        totalDocs: response.data.total_docs ?? 0,
+        totalFacts: response.data.count ?? 0,
         cacheHitRate: 0,
         avgConfidence: response.data.avg_confidence ?? 0,
         avgResponseTime: 0,
