@@ -50,7 +50,8 @@ def test_index_document():
         json={
             "doc_id": "test1",
             "text": "The sky is blue because of Rayleigh scattering."
-        }
+        },
+        headers={"X-API-Key": "test-key"},
     )
     assert response.status_code == 200, f"Index failed: {response.text}"
     assert response.json()["ok"] is True
@@ -62,7 +63,8 @@ def test_index_second_document():
         json={
             "doc_id": "test2",
             "text": "Water freezes at 0 degrees Celsius at standard pressure."
-        }
+        },
+        headers={"X-API-Key": "test-key"},
     )
     assert response.status_code == 200
 

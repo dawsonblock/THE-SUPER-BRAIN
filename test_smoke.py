@@ -47,7 +47,7 @@ def test_index_document():
     r = client.post("/index", json={
         "doc_id": "rope1",
         "text": "Rope memory stores bits by threading wires through magnetic cores."
-    })
+    }, headers={"X-API-Key": "test-key"})
     assert r.status_code == 200
     assert r.json()["ok"] is True
 
@@ -56,7 +56,7 @@ def test_index_second_document():
     r = client.post("/index", json={
         "doc_id": "rope2",
         "text": "Apollo Guidance Computer used rope memory for its software storage."
-    })
+    }, headers={"X-API-Key": "test-key"})
     assert r.status_code == 200
 
 
