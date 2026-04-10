@@ -38,6 +38,7 @@ def test_index_query_kill(tmp_path: Path):
             "REQUIRE_API_KEY_FOR_WRITES": "1",
             "KILL_PATH": str(kill_path),
             "INDEX_SNAPSHOT": str(index_snapshot),
+            "FACTS_DB_PATH": str(tmp_path / "facts.db"),
         }
     )
 

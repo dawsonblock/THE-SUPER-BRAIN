@@ -44,6 +44,9 @@ retrieval:
 # Facts Store (Canonical Q/A triples)
 facts_store:
   enabled: true
+  # Path is relative to brain-ai-rest-service/.  The code resolves an absolute
+  # default from __file__ and respects the FACTS_DB_PATH env var; this entry
+  # is kept for documentation and tooling that reads the config directly.
   db_path: "data/facts.db"
   confidence_threshold: 0.85  # Only store high-confidence facts
   cleanup:

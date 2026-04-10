@@ -53,6 +53,8 @@ export API_KEY="${API_KEY:-devkey}"
 export REQUIRE_API_KEY_FOR_WRITES=1
 export OCR_URL="${OCR_URL:-http://localhost:6001/ocr}"
 export METRICS_ENABLED=1
+# Absolute path so the dev launcher never depends on cwd.
+export FACTS_DB_PATH="$(pwd)/data/facts.db"
 
 uvicorn app.app_v2:app \
     --host 0.0.0.0 \
