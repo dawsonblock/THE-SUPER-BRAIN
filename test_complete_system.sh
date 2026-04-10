@@ -34,17 +34,17 @@ curl -sf "$BASE_URL/metrics" | grep -q "http_requests_total" && pass "/metrics" 
 curl -sf -X POST "$BASE_URL/index" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $API_KEY" \
-  -d '''{'doc_id':'t1','text':'Hydrogen is the lightest element.'}''' \
-  | grep -q '''"ok":true''' && pass "/index" || fail "/index"
+  -d '{"doc_id":"t1","text":"Hydrogen is the lightest element."}' \
+  | grep -q '"ok":true' && pass "/index" || fail "/index"
 
 # 5. Answer
 curl -sf -X POST "$BASE_URL/answer" \
   -H "Content-Type: application/json" \
-  -d '''{'query':'What is the lightest element?'}''' \
-  | grep -q '''"answer"''' && pass "/answer" || fail "/answer"
+  -d '{"query":"What is the lightest element?"}' \
+  | grep -q '"answer"' && pass "/answer" || fail "/answer"
 
 # 6. Facts stats
-curl -sf "$BASE_URL/facts/stats" | grep -q '''"count"''' && pass "/facts/stats" || fail "/facts/stats"
+curl -sf "$BASE_URL/facts/stats" | grep -q '"count"' && pass "/facts/stats" || fail "/facts/stats"
 
 echo ""
 echo "Results: PASSED=$PASSED FAILED=$FAILED"

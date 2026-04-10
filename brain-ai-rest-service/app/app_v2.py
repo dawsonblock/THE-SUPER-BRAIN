@@ -195,7 +195,9 @@ async def healthz() -> Dict[str, Any]:
         "native_module_available": bridge.available,
         "memory_index_active": not bridge.available,
         "documents": bridge.size(),
-        "facts": get_facts_store().get_stats(),
+        "facts": {
+            k: v for k, v in get_facts_store().get_stats().items() if k != "error"
+        },
     }
 
 
@@ -393,6 +395,10 @@ async def upsert_fact(payload: Dict[str, Any], request: Request) -> Dict[str, An
 async def facts_stats() -> Dict[str, Any]:
     """Compact facts statistics for the GUI dashboard."""
     raw = get_facts_store().get_stats()
+    # Suppress raw exception details — log server-side if needed
+    if "error" in raw:
+        LOGGER.error("facts_store.get_stats error (suppressed from client): %s", raw["error"])
+        return {"count": 0, "avg_confidence": 0.0, "total_accesses": 0}
     return {
         "count": raw.get("total_facts", 0),
         "avg_confidence": raw.get("avg_confidence", 0.0),
