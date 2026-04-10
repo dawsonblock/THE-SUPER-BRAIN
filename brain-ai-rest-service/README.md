@@ -45,7 +45,6 @@ Request:
   }
 }
 ```
-```
 
 Response:
 ```json
