@@ -1,7 +1,12 @@
-# Brain-AI v4.0 - Build Status
+# Brain-AI v4.0 — Native Module Build Status
 
-**Generated**: October 30, 2025  
-**Status**: ✅ **COMPLETE AND READY**
+> **Status**: The C++ native module (`brain_ai_core`) is **optional acceleration**.
+> The REST service (`app.app_v2`) runs correctly without it, using a pure-Python
+> in-memory vector index as fallback.  Performance will be reduced without the
+> native module, but all API routes and tests work.
+>
+> Several C++ subsystems below are still **partial or placeholder implementations**.
+> Do not treat the completion percentages as production-ready claims.
 
 ---
 

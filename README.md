@@ -1,48 +1,37 @@
 # Brain-AI RAG++ System
 
-> **Production-ready C++ cognitive architecture with vector search, multi-agent orchestration, and LLM integration**
+> RAG system with multi-agent orchestration, evidence gating, and a SQLite facts store.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](TEST_FIXES_SUMMARY.md)
-[![Tests](https://img.shields.io/badge/tests-6%2F6%20passing-brightgreen.svg)](TEST_FIXES_SUMMARY.md)
 [![Version](https://img.shields.io/badge/version-4.5.0-blue.svg)](VERSION)
-[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](docker-compose.yml)
+[![Docker](https://img.shields.io/badge/docker-compose-blue.svg)](docker-compose.yml)
+
+> **Runtime status**: The primary backend runtime is
+> `brain-ai-rest-service/app/app_v2.py`.  The C++ native module
+> (`brain_ai_core`) is **optional** acceleration; the service runs correctly
+> without it using an in-memory vector index.  Local/dev tests run in
+> `SAFE_MODE=1 LLM_STUB=1` (no real API calls).
 
 ---
 
 ## 🚀 Quick Start
 
-Get the full system running in under 5 minutes:
-
 ```bash
-# Automated deployment (recommended)
-./deploy.sh development
+# Dev mode (no C++ build required — safe/stub mode)
+./start_dev.sh
 
-# Or start services manually:
-# Terminal 1: OCR Service
-cd brain-ai/deepseek-ocr-service
-DEEPSEEK_OCR_MOCK_MODE=true python3 -m uvicorn app.main:app --port 8000
-
-# Terminal 2: REST API
-cd brain-ai-rest-service
-REQUIRE_API_KEY_FOR_WRITES=false python3 -m uvicorn app.app:app --port 5001
-
-# Terminal 3: GUI
-cd brain-ai-gui
-npm run dev
-
-# Run tests
-./test_smoke.sh  # Quick smoke test
-cd brain-ai/build && ctest  # Full test suite
+# Run smoke tests (no server required)
+python3 -m pytest -q brain-ai-rest-service/tests/test_app_smoke.py
+python3 -m pytest -q test_smoke.py test_api_endpoints.py
 ```
 
-**Access Points:**
+**Access Points (dev):**
 
 - 🌐 GUI: <http://localhost:3000>
 - 🔌 REST API: <http://localhost:5001>
 - 📄 API Docs: <http://localhost:5001/docs>
 - 📊 Metrics: <http://localhost:5001/metrics>
-- 🔍 OCR Service: <http://localhost:8000>
+- 🔍 OCR Stub: <http://localhost:6001>
 
 ---
 

@@ -18,12 +18,20 @@ DEFAULT_SYSTEM_PROMPT = "You are a grounded assistant. Answer only from provided
 
 
 def _stub_response(prompt: str) -> Dict[str, object]:
-    preview = " ".join(prompt.strip().split())[:120]
+    """Return a clearly-labelled stub response.
+
+    Stub responses are **not real LLM output**.  They are used in SAFE_MODE/LLM_STUB
+    mode only and are labelled with ``[STUB]`` so they cannot be mistaken for production
+    answers.  Confidence is intentionally capped at 0.50 to prevent stub answers from
+    being promoted to the facts store.
+    """
+    preview = " ".join(prompt.strip().split())[:80]
     heuristic = preview if preview else "No context"
     return {
-        "answer": f"Answer: {heuristic} (stubbed)",
+        "answer": f"[STUB — not a real LLM response] {heuristic}",
         "model": "stub",
         "latency_ms": 1,
+        "confidence": 0.50,  # capped: must not reach the 0.85 promotion threshold
     }
 
 
@@ -56,14 +64,15 @@ def deepseek_chat(
     """
     # Check for stub mode
     if os.getenv("LLM_STUB") == "1" or os.getenv("SAFE_MODE") == "1":
-        LOGGER.info("LLM stub mode enabled, returning mock response")
-        # Extract user message for stub
+        LOGGER.info(
+            "LLM_STUB/SAFE_MODE active — returning [STUB] response (not real LLM output)"
+        )
         user_msg = next((m["content"] for m in messages if m.get("role") == "user"), "")
         stub = _stub_response(user_msg)
         return json.dumps({
             "answer": stub["answer"],
             "citations": [],
-            "confidence": 0.75
+            "confidence": stub["confidence"],
         })
     
     api_key = os.getenv("DEEPSEEK_API_KEY")

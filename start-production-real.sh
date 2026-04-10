@@ -33,7 +33,7 @@ echo -e "${GREEN}✅ DeepSeek API key configured${NC}"
 # Stop any existing services
 echo ""
 echo -e "${BLUE}Stopping existing services...${NC}"
-pkill -f "uvicorn.*8000" 2>/dev/null || true
+pkill -f "uvicorn.*6001" 2>/dev/null || true
 pkill -f "uvicorn.*5001" 2>/dev/null || true
 pkill -f "vite.*3000" 2>/dev/null || true
 sleep 2
@@ -52,7 +52,7 @@ cd brain-ai/deepseek-ocr-service
 DEEPSEEK_OCR_MOCK_MODE=true \
   python3 -m uvicorn app.main:app \
   --host 0.0.0.0 \
-  --port 8000 \
+  --port 6001 \
   --workers 1 \
   > ../../logs/ocr-service.log 2>&1 &
 OCR_PID=$!
@@ -70,7 +70,7 @@ SAFE_MODE=false \
   DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY \
   DEEPSEEK_MODEL=deepseek-chat \
   REQUIRE_API_KEY_FOR_WRITES=false \
-  python3 -m uvicorn app.app:app \
+  python3 -m uvicorn app.app_v2:app \
   --host 0.0.0.0 \
   --port 5001 \
   --workers 2 \
@@ -108,7 +108,7 @@ echo -e "${BLUE}Running health checks...${NC}"
 
 # Check OCR
 echo -n "OCR Service: "
-if curl -s http://localhost:8000/health > /dev/null; then
+if curl -sf http://localhost:6001/health > /dev/null; then
     echo -e "${GREEN}✅ Healthy${NC}"
 else
     echo -e "${YELLOW}⚠️  Not responding${NC}"
@@ -141,7 +141,7 @@ echo "📊 Service URLs:"
 echo "   • GUI:     http://localhost:3000 (or 3001)"
 echo "   • API:     http://localhost:5001"
 echo "   • API Docs: http://localhost:5001/docs"
-echo "   • OCR:     http://localhost:8000"
+echo "   • OCR:     http://localhost:6001"
 echo ""
 echo "📝 Logs:"
 echo "   • OCR: tail -f logs/ocr-service.log"

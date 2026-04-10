@@ -32,7 +32,9 @@ def embed_text(text: str) -> List[float]:
     if backend == "external":
         return _external_embed(text)
 
-    LOGGER.warning("Unknown EMBEDDINGS_BACKEND=%s; falling back to CPU", backend)
+    LOGGER.warning(
+        "Unknown EMBEDDINGS_BACKEND=%s — falling back to CPU embeddings (degraded mode)", backend
+    )
     return _cpu_embed(text)
 
 

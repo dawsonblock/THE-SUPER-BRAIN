@@ -120,7 +120,7 @@ export PYTHONUNBUFFERED=1
 cd brain-ai-rest-service
 
 # Start with uvicorn
-uvicorn app:app \
+uvicorn app.app_v2:app \
     --host 0.0.0.0 \
     --port 5001 \
     --timeout-keep-alive 60 \
@@ -135,12 +135,12 @@ cd ..
 info "Brain-AI REST Service started (PID: $SERVICE_PID)"
 info "Service URL: http://localhost:5001"
 info "Metrics URL: http://localhost:5001/metrics"
-info "Health check: curl -H \"X-API-Key: $BRAIN_AI_API_KEY\" http://localhost:5001/health"
+info "Health check: curl -H \"X-API-Key: $BRAIN_AI_API_KEY\" http://localhost:5001/healthz"
 
 # Wait for service to be ready
 info "Waiting for service to be ready..."
 for i in {1..30}; do
-    if curl -s -H "X-API-Key: $BRAIN_AI_API_KEY" http://localhost:5001/health > /dev/null 2>&1; then
+    if curl -s http://localhost:5001/healthz > /dev/null 2>&1; then
         info "Service is ready!"
         break
     fi
@@ -168,11 +168,11 @@ echo "    • Auto-save persistence (every 10 docs)"
 echo "    • Rate limiting (60 req/min)"
 echo ""
 echo "  Endpoints:"
-echo "    • Health: GET /health"
-echo "    • Index: POST /api/v1/index_with_text"
-echo "    • Query: POST /api/v1/answer"
+echo "    • Health: GET /healthz"
+echo "    • Index: POST /index"
+echo "    • Query: POST /answer"
 echo "    • Metrics: GET /metrics"
-echo "    • Status: GET /api/v1/system/status"
+echo "    • Readiness: GET /readyz"
 echo ""
 echo "  Authentication:"
 echo "    • Add header: X-API-Key: $BRAIN_AI_API_KEY"

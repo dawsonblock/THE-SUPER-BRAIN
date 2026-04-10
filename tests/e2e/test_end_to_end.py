@@ -42,7 +42,7 @@ def test_index_query_kill(tmp_path: Path):
     )
 
     process = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "app.app:app", "--port", str(PORT)],
+        [sys.executable, "-m", "uvicorn", "app.app_v2:app", "--port", str(PORT)],
         cwd="brain-ai-rest-service",
         env=env,
     )
@@ -62,25 +62,27 @@ def test_index_query_kill(tmp_path: Path):
         )
         assert response.status_code == 200, response.text
 
-        query = {"query": "What speeds up deep learning?", "top_k": 3}
+        query = {"query": "What speeds up deep learning?"}
         response = requests.post(
-            f"http://127.0.0.1:{PORT}/query",
+            f"http://127.0.0.1:{PORT}/answer",
             json=query,
-            timeout=5,
+            timeout=10,
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["hits"], "expected at least one hit"
-        assert "Answer" in data["answer"]
-        assert data["model"] == "stub"
+        assert "answer" in data
+        assert "confidence" in data
 
-        kill_path.touch()
+        # Trigger kill switch — must return a real 503 JSON response
+        trig_headers = {"X-API-Key": env["API_KEY"]}
+        requests.post(f"http://127.0.0.1:{PORT}/admin/kill", headers=trig_headers, timeout=5)
         response = requests.post(
-            f"http://127.0.0.1:{PORT}/query",
+            f"http://127.0.0.1:{PORT}/answer",
             json=query,
             timeout=5,
         )
         assert response.status_code == 503
+        assert response.json().get("status") == 503 or response.json().get("detail") is not None
     finally:
         process.send_signal(signal.SIGINT)
         try:

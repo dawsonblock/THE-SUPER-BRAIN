@@ -42,8 +42,8 @@ EXPOSE 5001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5001/api/v1/system/status', timeout=5)"
+    CMD curl -f http://localhost:5001/healthz || exit 1
 
-# Run application with security limits
-CMD ["python", "-u", "app.py"]
+# Canonical entry point — app.app_v2 is the single authoritative runtime
+CMD ["uvicorn", "app.app_v2:app", "--host", "0.0.0.0", "--port", "5001"]
 

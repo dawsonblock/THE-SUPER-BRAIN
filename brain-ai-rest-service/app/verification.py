@@ -165,16 +165,12 @@ def verify_answer(
     query: str,
     task_type: Optional[str] = None,
 ) -> Dict[str, object]:
-    """
-    Apply verification based on task type.
-    
-    Args:
-        answer: Generated answer
-        query: Original query
-        task_type: Type of task (math, code, factual, etc.)
-    
-    Returns:
-        Dict with verification result and trace
+    """Apply verification based on task type.
+
+    **Current status**: math and code verification paths are placeholders that always
+    return ``verified=True``.  They do not perform real symbolic or execution-based
+    checking.  Only factual verification (evidence gating) is actually implemented.
+    Do not treat a ``verified=True`` result from math/code paths as a guarantee.
     """
     if task_type is None:
         # Heuristic detection
@@ -184,19 +180,29 @@ def verify_answer(
             task_type = "code"
         else:
             task_type = "factual"
-    
+
     LOGGER.info("Verifying answer for task_type=%s", task_type)
-    
+
     if task_type == "math":
-        # Try to extract and verify mathematical expressions
-        # This is a simplified heuristic; production would need better parsing
-        return {"verified": True, "task_type": task_type, "note": "Math verification placeholder"}
-    
+        LOGGER.warning(
+            "Math verification is a placeholder — always returns verified=True without real checking"
+        )
+        return {
+            "verified": True,
+            "task_type": task_type,
+            "note": "PLACEHOLDER: math verification not implemented; result is not checked",
+        }
+
     elif task_type == "code":
-        # For code tasks, we could extract and run test cases
-        # This is a placeholder for more sophisticated verification
-        return {"verified": True, "task_type": task_type, "note": "Code verification placeholder"}
-    
+        LOGGER.warning(
+            "Code verification is a placeholder — always returns verified=True without execution"
+        )
+        return {
+            "verified": True,
+            "task_type": task_type,
+            "note": "PLACEHOLDER: code execution verification not implemented",
+        }
+
     else:
         # Factual questions rely on evidence gating only
         return {"verified": True, "task_type": task_type, "note": "Evidence-based verification"}

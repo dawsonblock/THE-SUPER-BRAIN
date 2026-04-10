@@ -14,11 +14,11 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 # Service URLs
-OCR_SERVICE="http://localhost:8000"
+OCR_SERVICE="http://localhost:6001"
 REST_SERVICE="http://localhost:5001"
 
 echo "1. Testing OCR Service..."
-if curl -s -f "$OCR_SERVICE/health" > /dev/null; then
+if curl -sf "$OCR_SERVICE/health" > /dev/null; then
     echo -e "${GREEN}✓ OCR Service is healthy${NC}"
 else
     echo -e "${RED}✗ OCR Service failed${NC}"
@@ -58,7 +58,7 @@ else
 fi
 
 echo "5. Testing query..."
-if curl -s -f -X POST "$REST_SERVICE/query" \
+if curl -s -f -X POST "$REST_SERVICE/answer" \
     -H "Content-Type: application/json" \
     -d '{"query": "test query", "top_k": 5}' | jq -e '.answer' > /dev/null; then
     echo -e "${GREEN}✓ Query works${NC}"
@@ -73,7 +73,7 @@ echo -e "${GREEN}✅ All smoke tests passed!${NC}"
 echo "======================================"
 echo ""
 echo "System Status:"
-echo "  ✓ OCR Service running on port 8000"
+echo "  ✓ OCR Service running on port 6001"
 echo "  ✓ REST API running on port 5001"
 echo "  ✓ Document indexing functional"
 echo "  ✓ Query processing functional"

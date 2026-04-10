@@ -24,12 +24,13 @@ interface Citation {
 
 interface SystemStats {
   totalDocs: number;
+  totalFacts: number;
   cacheHitRate: number;
   avgConfidence: number;
   avgResponseTime: number;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -66,11 +67,34 @@ export const ChatInterface: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API_URL}/stats`);
-      setStats(response.data);
+      const response = await axios.get(`${API_URL}/facts/stats`);
+      // `/facts/stats` reports fact-store metrics, so map `count` to `totalFacts`.
+      // Reserve `totalDocs` for a dedicated document/index metric when available.
+      setStats({
+        totalDocs: response.data.total_docs ?? 0,
+        totalFacts: response.data.count ?? 0,
+        cacheHitRate: 0,
+        avgConfidence: response.data.avg_confidence ?? 0,
+        avgResponseTime: 0,
+      });
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     }
+  };
+
+  const getWriteAuthHeaders = () => {
+    const apiKey =
+      localStorage.getItem('apiKey') ||
+      localStorage.getItem('API_KEY') ||
+      localStorage.getItem('x-api-key');
+
+    if (!apiKey) {
+      throw new Error('Missing write API key. Configure an API key in localStorage (apiKey, API_KEY, or x-api-key) before uploading files.');
+    }
+
+    return {
+      'X-API-Key': apiKey,
+    };
   };
 
   const handleSendMessage = async () => {
@@ -99,7 +123,7 @@ export const ChatInterface: React.FC = () => {
         content: response.data.answer,
         timestamp: new Date(),
         confidence: response.data.confidence || 0.75,
-        citations: response.data.hits || [],  // API returns 'hits' not 'citations'
+        citations: response.data.citations || [],
         processingTime: response.data.latency_ms,
       };
 
@@ -125,29 +149,32 @@ export const ChatInterface: React.FC = () => {
     setUploadProgress(0);
 
     try {
-      const formData = new FormData();
-      Array.from(files).forEach(file => {
-        formData.append('files', file);
-      });
+      const headers = getWriteAuthHeaders();
 
-      await axios.post(`${API_URL}/documents/batch`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (progressEvent) => {
-          const progress = progressEvent.total
-            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            : 0;
-          setUploadProgress(progress);
-        },
-      });
+      // Index each file individually via the canonical /index endpoint.
+      // Files are read as text; binary/PDF content will be indexed as-is
+      // until a dedicated upload pipeline is implemented.
+      let indexed = 0;
+      for (const file of Array.from(files)) {
+        const text = await file.text().catch(() => `[binary file: ${file.name}]`);
+        await axios.post(`${API_URL}/index`, {
+          doc_id: `upload-${file.name}-${Date.now()}`,
+          text,
+        }, {
+          headers,
+        });
+        indexed += 1;
+        setUploadProgress(Math.round((indexed / files.length) * 100));
+      }
 
       const successMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `✅ Successfully uploaded ${files.length} document(s)! They are now indexed and ready for search.`,
+        content: `✅ Indexed ${files.length} document(s). They are now ready for search.`,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, successMessage]);
-      fetchStats(); // Update stats after upload
+      fetchStats();
     } catch (error: any) {
       const errorMessage: Message = {
         id: Date.now().toString(),

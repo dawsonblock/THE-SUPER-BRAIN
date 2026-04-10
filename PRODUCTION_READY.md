@@ -1,6 +1,8 @@
-# 🚀 Brain-AI v4.5.0 - Production Ready!
+# Brain-AI v4.5.0 — Status
 
-**Your AI system is now production-ready and deployed!**
+> **Note**: The C++ native module (`brain_ai_core`) is optional acceleration and still contains
+> partial/placeholder areas. The authoritative runtime is `app.app_v2`. Dev/CI tests run in
+> `SAFE_MODE=1 LLM_STUB=1` — stub responses are explicitly labelled, not production behaviour.
 
 ---
 
