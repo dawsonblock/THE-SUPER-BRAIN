@@ -17,7 +17,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-PRODUCTION_PORT_OCR=8000
+PRODUCTION_PORT_OCR=6001
 PRODUCTION_PORT_API=5001
 PRODUCTION_PORT_GUI=80
 PRODUCTION_HOST="0.0.0.0"
@@ -66,7 +66,7 @@ echo ""
 
 echo -e "${BLUE}Step 3: Stopping Existing Services${NC}"
 echo "-----------------------------------"
-pkill -f "uvicorn.*8000" 2>/dev/null || true
+pkill -f "uvicorn.*6001" 2>/dev/null || true
 pkill -f "uvicorn.*5001" 2>/dev/null || true
 pkill -f "serve.*dist" 2>/dev/null || true
 echo -e "${GREEN}✅ Old services stopped${NC}"
@@ -79,7 +79,7 @@ echo "-----------------------------------"
 echo "Starting OCR Service on port $PRODUCTION_PORT_OCR..."
 cd brain-ai/deepseek-ocr-service
 DEEPSEEK_OCR_MOCK_MODE=true \
-  python3 -m uvicorn app.app_v2:app \
+  python3 -m uvicorn app.main:app \
   --host $PRODUCTION_HOST \
   --port $PRODUCTION_PORT_OCR \
   --workers 2 \
