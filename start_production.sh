@@ -120,7 +120,7 @@ export PYTHONUNBUFFERED=1
 cd brain-ai-rest-service
 
 # Start with uvicorn
-uvicorn app:app \
+uvicorn app.app_v2:app \
     --host 0.0.0.0 \
     --port 5001 \
     --timeout-keep-alive 60 \
@@ -169,10 +169,10 @@ echo "    • Rate limiting (60 req/min)"
 echo ""
 echo "  Endpoints:"
 echo "    • Health: GET /health"
-echo "    • Index: POST /api/v1/index_with_text"
-echo "    • Query: POST /api/v1/answer"
+echo "    • Index: POST /index"
+echo "    • Query: POST /answer"
 echo "    • Metrics: GET /metrics"
-echo "    • Status: GET /api/v1/system/status"
+echo "    • Status: GET /healthz"
 echo ""
 echo "  Authentication:"
 echo "    • Add header: X-API-Key: $BRAIN_AI_API_KEY"

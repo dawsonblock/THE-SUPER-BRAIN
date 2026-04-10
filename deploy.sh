@@ -140,7 +140,7 @@ echo ""
 echo -e "${YELLOW}Verifying deployment...${NC}"
 
 # Check OCR service
-if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
+if curl -s -f http://localhost:6001/ocr > /dev/null 2>&1; then
     echo -e "${GREEN}✓ OCR service is healthy${NC}"
 else
     echo -e "${RED}✗ OCR service is not responding${NC}"
@@ -162,7 +162,7 @@ echo -e "${GREEN}✅ Deployment Successful!${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 echo "Services:"
-echo "  OCR Service:  http://localhost:8000"
+echo "  OCR Service:  http://localhost:6001"
 echo "  REST API:     http://localhost:5001"
 echo "  GUI:          http://localhost:3000"
 echo ""

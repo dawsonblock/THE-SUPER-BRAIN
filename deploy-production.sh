@@ -79,7 +79,7 @@ echo "-----------------------------------"
 echo "Starting OCR Service on port $PRODUCTION_PORT_OCR..."
 cd brain-ai/deepseek-ocr-service
 DEEPSEEK_OCR_MOCK_MODE=true \
-  python3 -m uvicorn app.main:app \
+  python3 -m uvicorn app.app_v2:app \
   --host $PRODUCTION_HOST \
   --port $PRODUCTION_PORT_OCR \
   --workers 2 \
@@ -97,7 +97,7 @@ cd brain-ai-rest-service
 REQUIRE_API_KEY_FOR_WRITES=false \
   SAFE_MODE=false \
   LLM_STUB=false \
-  python3 -m uvicorn app.app:app \
+  python3 -m uvicorn app.app_v2:app \
   --host $PRODUCTION_HOST \
   --port $PRODUCTION_PORT_API \
   --workers 4 \
