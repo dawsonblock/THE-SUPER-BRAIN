@@ -139,11 +139,11 @@
 
 ## 🎛️ UI Toggle Implementation
 
-### New Endpoint: `/api/v1/answer`
+### New Endpoint: `/answer`
 
 **Mode 1: Single Agent (Regular AI)**
 ```bash
-curl -X POST http://localhost:5001/api/v1/answer \
+curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
     "question": "What is the capital of France?",
@@ -153,7 +153,7 @@ curl -X POST http://localhost:5001/api/v1/answer \
 
 **Mode 2: Multi-Agent (Orchestration)**
 ```bash
-curl -X POST http://localhost:5001/api/v1/answer \
+curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
     "question": "Prove the Pythagorean theorem",
@@ -272,7 +272,7 @@ export FACTS_THRESHOLD=0.85
 
 ### Quick Test - Single Agent
 ```bash
-curl -X POST http://localhost:5001/api/v1/answer \
+curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
     "question": "What is 2+2?",
@@ -282,7 +282,7 @@ curl -X POST http://localhost:5001/api/v1/answer \
 
 ### Quick Test - Multi-Agent
 ```bash
-curl -X POST http://localhost:5001/api/v1/answer \
+curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
     "question": "Explain why quicksort is O(n log n)",
@@ -292,7 +292,7 @@ curl -X POST http://localhost:5001/api/v1/answer \
 
 ### System Status
 ```bash
-curl http://localhost:5001/api/v1/system/status
+curl http://localhost:5001/healthz
 ```
 
 ---
@@ -335,7 +335,7 @@ curl http://localhost:5001/api/v1/system/status
 For questions or issues:
 1. Check `config.yaml` for configuration
 2. Review logs for initialization status
-3. Test with `/api/v1/system/status`
+3. Test with `/healthz`
 
 **Documentation**:
 - Main README: `/Users/dawsonblock/C-AI-BRAIN/README.md`

@@ -228,21 +228,21 @@ security.rate_limiting.burst_size: 10
 ## 🎯 API Endpoints
 
 ### **Core RAG++ Endpoints**:
-- `POST /api/v1/index_with_text` - Index document with auto-embedding
-- `POST /api/v1/answer` - RAG++ query (single or multi-agent)
-- `POST /api/v1/chunk` - Smart document chunking
-- `GET /api/v1/facts/stats` - Facts cache statistics
-- `GET /api/v1/system/status` - Component status
-- `GET /api/v1/stats` - Usage statistics
+- `POST /index` - Index document with auto-embedding
+- `POST /answer` - RAG++ query (single or multi-agent)
+- `GET /facts/stats` - Facts cache statistics
+- `GET /healthz` - Liveness health check
+- `GET /readyz` - Readiness health check
 
-### **Persistence Endpoints**:
+### **Persistence Endpoints** *(internal/legacy)*:
 - `POST /api/v1/persistence/save` - Manual save
 - `POST /api/v1/persistence/load` - Manual load
 
-### **Legacy Endpoints**:
-- `POST /api/v1/documents/process` - OCR-based indexing
-- `POST /api/v1/query` - Legacy query format
-- `POST /api/v1/index` - Index with pre-computed embedding
+### **Legacy Endpoints** *(historical reference)*:
+- `POST /api/v1/documents/process` → use `/index`
+- `POST /api/v1/query` → use `/answer`
+- `POST /api/v1/index` → use `/index`
+- `GET /api/v1/stats` → use `/facts/stats`
 
 ---
 
