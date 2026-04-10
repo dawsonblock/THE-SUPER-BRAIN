@@ -69,7 +69,7 @@ export const ChatInterface: React.FC = () => {
       // `/facts/stats` reports fact-store metrics, so map `count` to `totalFacts`.
       // Reserve `totalDocs` for a dedicated document/index metric when available.
       setStats({
-        totalDocs: (data as any).total_docs ?? 0,
+        totalDocs: data.total_docs ?? 0,
         totalFacts: data.count ?? 0,
         cacheHitRate: 0,
         avgConfidence: data.avg_confidence ?? 0,

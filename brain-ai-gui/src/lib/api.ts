@@ -63,11 +63,13 @@ export const apiClient = {
     count: number;
     avg_confidence: number;
     total_accesses: number;
+    total_docs?: number;
   }> {
     const { data } = await api.get<{
       count: number;
       avg_confidence: number;
       total_accesses: number;
+      total_docs?: number;
     }>('/facts/stats');
     return data;
   },

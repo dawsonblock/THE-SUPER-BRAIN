@@ -24,6 +24,9 @@ _LEGACY_COLUMNS = {"question_hash", "verified_at"}
 
 def _get_columns(conn: sqlite3.Connection, table: str) -> set:
     """Return the set of column names for *table* (empty set if table absent)."""
+    # Only allow known table names to prevent SQL injection via f-string below.
+    if table not in {"facts", "facts_v2"}:
+        raise ValueError(f"Unexpected table name: {table!r}")
     rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
     return {row[1] for row in rows}
 
@@ -76,48 +79,65 @@ def _migrate_schema(conn: sqlite3.Connection, db_path: str) -> None:
         """)
 
         # Build SELECT expression that maps old columns to new ones.
+        # Each column value is fetched per-row using parameterized queries so no
+        # dynamic SQL identifiers are ever interpolated from external input.
         now = int(time.time())
 
-        # q_hash: use existing q_hash or derive from question
-        if "q_hash" in present:
-            q_hash_expr = "q_hash"
-        else:
-            # Will be NULL in the copy; we'll UPDATE afterwards.
-            q_hash_expr = "NULL"
+        # --- q_hash ---
+        has_q_hash = "q_hash" in present
+        # --- created_at ---
+        has_created_at = "created_at" in present
+        has_verified_at = "verified_at" in present
+        # --- last_accessed ---
+        has_last_accessed = "last_accessed" in present
+        # --- access_count ---
+        has_access_count = "access_count" in present
 
-        # created_at: prefer existing, fall back to verified_at, then now
-        if "created_at" in present:
-            created_at_expr = "created_at"
-        elif "verified_at" in present:
-            created_at_expr = "COALESCE(verified_at, %d)" % now
-        else:
-            created_at_expr = str(now)
+        # Fetch all source rows first, then insert with fully-parameterized SQL.
+        src_rows = conn.execute("SELECT rowid, question, answer, citations, confidence FROM facts").fetchall()
 
-        # last_accessed: prefer existing, fall back to verified_at, then now
-        if "last_accessed" in present:
-            last_accessed_expr = "last_accessed"
-        elif "verified_at" in present:
-            last_accessed_expr = "COALESCE(verified_at, %d)" % now
-        else:
-            last_accessed_expr = str(now)
+        for src_rowid, question, answer, citations, confidence in src_rows:
+            # q_hash: copy if present, else NULL (backfilled later)
+            q_hash_val: Optional[str] = None
+            if has_q_hash:
+                row = conn.execute("SELECT q_hash FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                q_hash_val = row[0] if row else None
 
-        # access_count
-        access_count_expr = "access_count" if "access_count" in present else "0"
+            # created_at
+            if has_created_at:
+                row = conn.execute("SELECT created_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                created_at_val = row[0] if (row and row[0]) else now
+            elif has_verified_at:
+                row = conn.execute("SELECT verified_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                created_at_val = row[0] if (row and row[0]) else now
+            else:
+                created_at_val = now
 
-        conn.execute(f"""
-            INSERT INTO facts_v2
-                (q_hash, question, answer, citations, confidence, created_at, access_count, last_accessed)
-            SELECT
-                {q_hash_expr},
-                question,
-                answer,
-                citations,
-                confidence,
-                {created_at_expr},
-                {access_count_expr},
-                {last_accessed_expr}
-            FROM facts
-        """)
+            # last_accessed
+            if has_last_accessed:
+                row = conn.execute("SELECT last_accessed FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                last_accessed_val = row[0] if (row and row[0]) else now
+            elif has_verified_at:
+                row = conn.execute("SELECT verified_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                last_accessed_val = row[0] if (row and row[0]) else now
+            else:
+                last_accessed_val = now
+
+            # access_count
+            if has_access_count:
+                row = conn.execute("SELECT access_count FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                access_count_val = row[0] if (row and row[0] is not None) else 0
+            else:
+                access_count_val = 0
+
+            conn.execute(
+                """INSERT INTO facts_v2
+                       (q_hash, question, answer, citations, confidence,
+                        created_at, access_count, last_accessed)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (q_hash_val, question, answer, citations, confidence,
+                 created_at_val, access_count_val, last_accessed_val),
+            )
 
         # Backfill q_hash where it was NULL (legacy schema had question_hash).
         if "q_hash" not in present:
