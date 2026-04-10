@@ -1,4 +1,8 @@
-# Brain-AI Integration - Final Status Report
+# Brain-AI Integration — Status Report
+
+> **Note**: "Complete" sections below refer to the Python REST layer only.
+> The C++ native module is optional/partial — do not treat BUILD_STATUS claims as production-ready.
+> Authoritative backend: `brain-ai-rest-service/app/app_v2.py`.
 
 **Date**: 2025-10-31  
 **Status**: ✅ **COMPLETE** - All Integration Phases Delivered  

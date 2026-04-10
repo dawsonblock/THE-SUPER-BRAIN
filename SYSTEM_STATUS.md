@@ -1,6 +1,7 @@
-# 🎉 Brain-AI v4.5.0 - System Status
+# Brain-AI v4.5.0 — System Status
 
-**All Services Running and Healthy!**
+> **Note**: OCR service runs on port `6001` (not `8000`). Backend runtime is `app.app_v2`.
+> C++ native module is optional acceleration. Dev mode uses stub/safe settings.
 
 ---
 

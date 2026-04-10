@@ -1,7 +1,9 @@
-# Production Build Implementation - Complete
+# Production Build Implementation
 
-**Date:** November 4, 2024  
-**Status:** ✅ COMPLETE
+> **Note**: Authoritative backend runtime is `brain-ai-rest-service/app/app_v2.py`.
+> C++ native module is optional acceleration. OCR is standardised on port `6001`.
+
+**Date:** November 4, 2024
 
 ## Summary
 

@@ -1,12 +1,13 @@
-# Brain-AI v4.0 - Quick Start Guide
+# Brain-AI — Quick Start
 
-**⚡ Get Started in 5 Minutes**
+> **Runtime**: `brain-ai-rest-service/app/app_v2.py` is the only authoritative backend.
+> The C++ native module (`brain_ai_core`) is optional acceleration; the service runs without it.
+> OCR is standardised on port `6001`, route `POST /ocr`.
+> Local/dev tests use `SAFE_MODE=1 LLM_STUB=1` (no real API calls, stub responses labelled as such).
 
 ---
 
-## 🚀 Quick Setup
-
-### Option 1: Local Development (Recommended for Development)
+## Dev mode (no C++ build required)
 
 ```bash
 # 1. Clone and enter directory

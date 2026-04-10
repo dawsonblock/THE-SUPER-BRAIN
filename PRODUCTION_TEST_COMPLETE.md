@@ -1,6 +1,7 @@
-# 🎉 Brain-AI v4.5.0 - Production System Complete!
+# Brain-AI v4.5.0 — Production Test Notes
 
-**Real DeepSeek API Integration - Fully Tested**
+> **Note**: OCR service runs on port `6001` (not `8000`). Authoritative backend: `app.app_v2`.
+> Dev/CI tests use stub mode — responses are labelled "stubbed" and do not represent production output.
 
 ---
 

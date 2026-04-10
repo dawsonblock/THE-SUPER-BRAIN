@@ -1,5 +1,10 @@
 # Brain-AI RAG++ Deployment Guide
 
+> **Note**: The primary runtime is `brain-ai-rest-service/app/app_v2.py`.
+> `app.py` at the service root is a thin compatibility shim.
+> The C++ native module is optional acceleration — the service runs without it.
+> OCR is standardised on port `6001`, route `POST /ocr`, response keys `status`/`text`/`latency_ms`.
+
 ## Overview
 
 This guide covers deployment strategies for the Brain-AI RAG++ system in local development, staging, and production environments.
