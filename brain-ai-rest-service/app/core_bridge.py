@@ -63,6 +63,10 @@ class MemoryIndex:
         with self._lock:
             return len(self._docs)
 
+    def clear(self) -> None:
+        with self._lock:
+            self._docs.clear()
+
     def save(self, path: os.PathLike[str] | str) -> None:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -100,10 +104,14 @@ class CoreBridge:
         self._memory = MemoryIndex()
         try:
             self._module = importlib.import_module("brain_ai_core")
-            LOGGER.info("brain_ai_core module loaded")
+            LOGGER.info("brain_ai_core native module loaded (optional acceleration active)")
         except ImportError:
             self._module = None
-            LOGGER.warning("brain_ai_core module not available; using memory fallback")
+            LOGGER.warning(
+                "brain_ai_core native module not available — "
+                "running with pure-Python MemoryIndex fallback. "
+                "This is normal without a C++ build; performance will be reduced."
+            )
 
         # Attempt to load snapshot on startup
         self.load_index(settings.index_snapshot_path)
@@ -176,6 +184,16 @@ class CoreBridge:
 
     def size(self) -> int:
         return self._memory.size()
+
+    def clear(self) -> None:
+        """Clear in-memory vector index. Does not affect the persistent snapshot file."""
+        if self._module:
+            LOGGER.info(
+                "clear() called but brain_ai_core pybind module does not expose a clear method; "
+                "clearing MemoryIndex shadow copy only"
+            )
+        self._memory.clear()
+        LOGGER.info("In-memory vector index cleared")
 
 
 bridge = CoreBridge()

@@ -18,6 +18,7 @@ from typing import Any, Dict, List
 
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from .agents import multi_agent_query
 from .config import settings
@@ -99,10 +100,9 @@ def _require_api_key(request: Request) -> None:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Invalid API key")
 
 
-def _check_kill_switch() -> None:
-    """Check if kill switch is engaged."""
-    if Path(settings.kill_switch_path).exists():
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Kill switch engaged")
+def _check_kill_switch() -> bool:
+    """Return True if the kill switch file is present."""
+    return Path(settings.kill_switch_path).exists()
 
 
 @app.on_event("startup")
@@ -134,14 +134,20 @@ async def observability_middleware(request: Request, call_next):
     status_code = status.HTTP_200_OK
     try:
         rate_limiter.check(client)
-        _check_kill_switch()
+        if _check_kill_switch():
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return JSONResponse(
+                status_code=status_code,
+                content={"detail": "Kill switch engaged", "status": 503},
+            )
         
         if request.method in {"POST", "PUT", "PATCH"}:
             content_length = request.headers.get("content-length")
             if content_length and int(content_length) > settings.max_doc_bytes:
-                raise HTTPException(
-                    status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    "Payload too large",
+                status_code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+                return JSONResponse(
+                    status_code=status_code,
+                    content={"detail": "Payload too large"},
                 )
         
         response = await call_next(request)
@@ -172,24 +178,36 @@ async def observability_middleware(request: Request, call_next):
 
 @app.get("/healthz")
 async def healthz() -> Dict[str, Any]:
-    """Health check endpoint."""
+    """Health check — reports degraded mode state honestly."""
+    llm_stub = bool(os.getenv("LLM_STUB", "0") not in ("0", "false", ""))
+    embeddings_backend = os.getenv("EMBEDDINGS_BACKEND", "cpu")
     return {
         "ok": True,
         "version": "3.0.0",
-        "pybind_available": bridge.available,
+        "safe_mode": settings.safe_mode,
+        "llm_stub": llm_stub,
+        "embeddings_backend": embeddings_backend,
+        "native_module_available": bridge.available,
+        "memory_index_active": not bridge.available,
         "documents": bridge.size(),
         "facts": get_facts_store().get_stats(),
     }
 
 
 @app.get("/readyz")
-async def readyz() -> Dict[str, Any]:
-    """Readiness check endpoint."""
-    _check_kill_switch()
-    return {
-        "ready": True,
-        "requires_api_key": settings.require_api_key_for_writes,
-    }
+async def readyz() -> JSONResponse:
+    """Readiness check — returns 503 JSON (not exception) when kill switch is active."""
+    if _check_kill_switch():
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"ready": False, "reason": "Kill switch engaged"},
+        )
+    return JSONResponse(
+        content={
+            "ready": True,
+            "requires_api_key": settings.require_api_key_for_writes,
+        }
+    )
 
 
 @app.get("/metrics")
@@ -350,6 +368,39 @@ async def list_facts(request: Request, limit: int = 100) -> Dict[str, Any]:
         "count": len(facts_list),
         "stats": facts.get_stats(),
     }
+
+
+@app.post("/facts")
+async def upsert_fact(payload: Dict[str, Any], request: Request) -> Dict[str, Any]:
+    """Manually upsert a fact into the store."""
+    _require_api_key(request)
+    facts = get_facts_store()
+    ok = facts.upsert(
+        question=payload["question"],
+        answer=payload["answer"],
+        citations=payload.get("citations", []),
+        confidence=float(payload.get("confidence", 0.9)),
+    )
+    return {"ok": ok}
+
+
+@app.get("/facts/stats")
+async def facts_stats() -> Dict[str, Any]:
+    """Compact facts statistics for the GUI dashboard."""
+    raw = get_facts_store().get_stats()
+    return {
+        "count": raw.get("total_facts", 0),
+        "avg_confidence": raw.get("avg_confidence", 0.0),
+        "total_accesses": raw.get("total_accesses", 0),
+    }
+
+
+@app.post("/admin/clear-cache")
+async def clear_cache(request: Request) -> Dict[str, Any]:
+    """Clear in-memory vector index (does not affect persistent snapshot or facts store)."""
+    _require_api_key(request)
+    bridge.clear()
+    return {"ok": True, "message": "In-memory index cleared"}
 
 
 @app.post("/admin/kill")
