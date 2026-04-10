@@ -216,6 +216,32 @@ async def extract_text(
         )
 
 
+@app.post("/ocr")
+async def ocr_canonical(file: UploadFile = File(...)) -> dict:
+    """Canonical OCR endpoint — standardised contract: POST /ocr on port 6001.
+
+    Accepts a file upload and returns ``status``, ``text``, and ``latency_ms``.
+    This is the only public contract used by tests, compose, and the backend service.
+    The richer ``/ocr/extract`` endpoint remains available for internal/advanced use.
+    """
+    import time as _time
+
+    started = _time.perf_counter()
+    content = await file.read()
+    if not content:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    file_size = len(content)
+    text = generate_mock_ocr_result(file.filename or "upload", "ocr", file_size)
+    latency = int((_time.perf_counter() - started) * 1000)
+    return {
+        "status": "ok",
+        "text": text,
+        "latency_ms": latency,
+    }
+
+
 def simulate_processing_time(file_size: int, mode: str) -> int:
     """Simulate realistic processing time based on file size and mode"""
     base_time = {

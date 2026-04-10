@@ -286,12 +286,51 @@ async def root():
         "status": "running",
         "endpoints": {
             "health": "/health",
+            "ocr": "/ocr",
             "extract": "/ocr/extract",
             "batch": "/ocr/batch"
         }
     }
 
 
+@app.post("/ocr")
+async def ocr_canonical(file: UploadFile = File(...)):
+    """Canonical OCR endpoint — standardised contract: POST /ocr on port 6001.
+
+    Returns ``status``, ``text``, and ``latency_ms``.
+    This is the only public contract used by tests, compose, and the backend service.
+    """
+    import time as _time
+
+    if ocr_engine is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="OCR engine not initialised")
+
+    started = _time.perf_counter()
+    content = await file.read()
+    if not content:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    try:
+        from PIL import Image
+        import io
+        image = Image.open(io.BytesIO(content)).convert("RGB")
+        settings_obj = ocr_engine.settings
+        result = ocr_engine.process_image(image, settings_obj.default_resolution, "ocr")
+        text = result.get("text", "")
+    except Exception as exc:
+        logger.warning("OCR engine error: %s — returning empty text", exc)
+        text = ""
+
+    latency = int((_time.perf_counter() - started) * 1000)
+    return {
+        "status": "ok",
+        "text": text,
+        "latency_ms": latency,
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=6001)
