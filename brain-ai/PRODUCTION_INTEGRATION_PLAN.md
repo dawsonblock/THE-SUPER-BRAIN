@@ -241,7 +241,6 @@ CREATE INDEX idx_importance ON episodes(importance);
 ```
 POST   /answer                - Submit semantic query / get answer
 POST   /index                 - Index document
-GET    /api/v1/explain/:id    - Get decision explanation
 GET    /healthz               - Liveness health check
 GET    /metrics               - Prometheus metrics
 ```

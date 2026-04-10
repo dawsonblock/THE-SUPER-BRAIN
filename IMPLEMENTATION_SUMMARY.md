@@ -20,7 +20,7 @@
   - Load-on-startup capability
 - **Files**:
   - `persistence.py`: PersistenceManager and AutoSaveMixin
-  - Endpoints: `/api/v1/persistence/save`, `/api/v1/persistence/load`
+  - Endpoints: `/admin/persistence/save`, `/admin/persistence/load`
 - **Test Result**: ✅ PASS
 
 ### 3. **Verifier Tools** ✅
@@ -235,8 +235,8 @@ security.rate_limiting.burst_size: 10
 - `GET /readyz` - Readiness health check
 
 ### **Persistence Endpoints** *(internal/legacy)*:
-- `POST /api/v1/persistence/save` - Manual save
-- `POST /api/v1/persistence/load` - Manual load
+- `POST /admin/persistence/save` - Manual save
+- `POST /admin/persistence/load` - Manual load
 
 ### **Legacy Endpoints** *(historical reference)*:
 - `POST /api/v1/documents/process` → use `/index`

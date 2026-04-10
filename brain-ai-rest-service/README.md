@@ -263,15 +263,15 @@ Tuning:
 
 Runtime adjustment:
 ```bash
-# Update window size
-curl -X POST http://localhost:5001/api/v1/monitoring/histogram_window \
+# Update window size (internal admin endpoint)
+curl -X POST http://localhost:5001/admin/monitoring/histogram_window \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $BRAIN_AI_API_KEY" \
   -d '{"sample_size": 2048}'
 
 # Inspect current size
 curl -H "X-API-Key: $BRAIN_AI_API_KEY" \
-  http://localhost:5001/api/v1/monitoring/histogram_window
+  http://localhost:5001/admin/monitoring/histogram_window
 ```
 
 
