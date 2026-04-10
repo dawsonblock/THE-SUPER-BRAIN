@@ -38,7 +38,13 @@ def _fallback_embed(text: str) -> np.ndarray:
 
 
 def embed_text(text: str) -> List[float]:
-    """Return a deterministic embedding for ``text`` using CPU resources only."""
+    """Return a deterministic embedding for ``text`` using CPU resources only.
+
+    Falls back to a deterministic hash-seeded RNG vector when sentence-transformers
+    is unavailable or fails to load.  **Fallback embeddings are semantically meaningless**
+    and will produce poor retrieval quality.  Install ``sentence-transformers`` for real
+    embeddings.
+    """
 
     try:
         model = _load_model()
@@ -50,7 +56,11 @@ def embed_text(text: str) -> List[float]:
             array = array[0]
         return array.tolist()
     except Exception as exc:  # pragma: no cover - fallback path
-        LOGGER.warning("Falling back to deterministic RNG embeddings: %s", exc)
+        LOGGER.warning(
+            "sentence-transformers unavailable — using DEGRADED hash-seeded RNG embeddings "
+            "(semantically meaningless; retrieval quality will be poor): %s",
+            exc,
+        )
         return _fallback_embed(text).tolist()
 
 

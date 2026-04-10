@@ -101,8 +101,13 @@ def _require_api_key(request: Request) -> None:
 
 
 def _check_kill_switch() -> bool:
-    """Return True if the kill switch file is present."""
-    return Path(settings.kill_switch_path).exists()
+    """Return True if the kill switch file is present.
+
+    Reads KILL_PATH from the environment at call time so that tests can set
+    the variable after module import without needing to reload the config module.
+    """
+    path = os.getenv("KILL_PATH", settings.kill_switch_path)
+    return Path(path).exists()
 
 
 @app.on_event("startup")
