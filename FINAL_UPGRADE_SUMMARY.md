@@ -1,5 +1,14 @@
 # Brain-AI System - Complete Upgrade Summary
 
+> **⚠️ HISTORICAL SESSION RECORD — ARCHIVE ONLY**
+> This document was written during the v4.4.0 → v4.5.0 upgrade session (2025-11-05).
+> Port numbers, route names, and commands described here reflect the state at that time.
+> The canonical current contracts are:
+> - Backend runtime: `brain-ai-rest-service/app/app_v2.py`
+> - Answer route: `POST /answer` (port 5001)
+> - OCR route: `POST /ocr` (port 6001)
+> References to port `8000`, `/query`, or other legacy items below are historical context only.
+
 **Date**: November 5, 2025  
 **Version**: 4.4.0 → 4.5.0  
 **Status**: ✅ **COMPLETE AND VERIFIED**

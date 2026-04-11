@@ -34,7 +34,9 @@ class Settings(BaseSettings):
     
     # Server configuration
     host: str = "0.0.0.0"
-    port: int = 8000
+    # Canonical top-level OCR port is 6001 (POST /ocr). The Dockerfile and
+    # docker-compose files also hard-code 6001 in the CMD/ports stanzas.
+    port: int = 6001
     workers: int = 1  # GPU limited, typically 1
     timeout: int = 60
     
