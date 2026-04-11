@@ -18,6 +18,8 @@ NC='\033[0m' # No Color
 # Service URLs
 OCR_SERVICE="http://localhost:6001"
 REST_SERVICE="http://localhost:5001"
+# API key for protected write endpoints (override via environment)
+API_KEY="${API_KEY:-devkey}"
 
 # Test counters
 TESTS_TOTAL=0
@@ -97,6 +99,7 @@ test_start "Document Indexing via REST API"
 
 if response=$(curl -s -f -X POST "$REST_SERVICE/index" \
     -H "Content-Type: application/json" \
+    -H "X-API-Key: $API_KEY" \
     -d "{
         \"doc_id\": \"e2e_test_001\",
         \"text\": \"This is a test document for end-to-end testing.\",
@@ -119,12 +122,15 @@ test_start "Batch Document Indexing"
 
 if response=$(curl -s -f -X POST "$REST_SERVICE/index" \
     -H "Content-Type: application/json" \
+    -H "X-API-Key: $API_KEY" \
     -d '{"doc_id": "batch_001", "text": "Batch document 1 content", "metadata": {"source": "e2e"}}') && \
    curl -s -f -X POST "$REST_SERVICE/index" \
     -H "Content-Type: application/json" \
+    -H "X-API-Key: $API_KEY" \
     -d '{"doc_id": "batch_002", "text": "Batch document 2 content", "metadata": {"source": "e2e"}}' > /dev/null && \
    curl -s -f -X POST "$REST_SERVICE/index" \
     -H "Content-Type: application/json" \
+    -H "X-API-Key: $API_KEY" \
     -d '{"doc_id": "batch_003", "text": "Batch document 3 content", "metadata": {"source": "e2e"}}' > /dev/null; then
     
     test_pass
@@ -138,8 +144,7 @@ test_start "Answer/Query Processing"
 if response=$(curl -s -f -X POST "$REST_SERVICE/answer" \
     -H "Content-Type: application/json" \
     -d '{
-        "question": "What is in the test documents?",
-        "use_multi_agent": false
+        "query": "What is in the test documents?"
     }'); then
     
     response_text=$(echo "$response" | jq -r '.answer // .response // empty')
@@ -159,8 +164,7 @@ test_start "Answer with Semantic Search"
 if response=$(curl -s -f -X POST "$REST_SERVICE/answer" \
     -H "Content-Type: application/json" \
     -d '{
-        "question": "Find documents about batch processing",
-        "use_multi_agent": false,
+        "query": "Find documents about batch processing",
         "top_k": 3
     }'); then
     
@@ -178,6 +182,7 @@ test_start "Document Indexing"
 
 if response=$(curl -s -f -X POST "$REST_SERVICE/index" \
     -H "Content-Type: application/json" \
+    -H "X-API-Key: $API_KEY" \
     -d '{
         "doc_id": "direct_index_001",
         "text": "This document was directly indexed without OCR",
@@ -221,8 +226,7 @@ START=$(date +%s%N)
 curl -s -X POST "$REST_SERVICE/answer" \
     -H "Content-Type: application/json" \
     -d '{
-        "question": "Performance test query",
-        "use_multi_agent": false,
+        "query": "Performance test query",
         "top_k": 3
     }' > /dev/null
 END=$(date +%s%N)

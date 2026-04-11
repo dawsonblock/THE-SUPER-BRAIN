@@ -46,7 +46,7 @@ sudo systemctl start brain-ai
 - **CPU**: 4+ cores recommended
 - **RAM**: 8GB minimum, 16GB recommended
 - **Disk**: 20GB free space
-- **Network**: Open ports 80, 443, 5001, 8000
+- **Network**: Open ports 80, 443, 5001, 6001
 
 ### **Software Requirements**
 ```bash
@@ -354,7 +354,7 @@ sudo journalctl -u brain-ai-api -n 50
 ls -la /opt/brain-ai
 
 # Check ports
-sudo netstat -tulpn | grep -E '(80|5001|8000)'
+sudo netstat -tulpn | grep -E '(80|5001|6001)'
 ```
 
 ### **High Memory Usage**

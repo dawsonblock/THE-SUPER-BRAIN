@@ -31,6 +31,12 @@ def _get_columns(conn: sqlite3.Connection, table: str) -> set:
     return {row[1] for row in rows}
 
 
+def _derive_hash(question: str) -> str:
+    """Compute a stable q_hash from normalized question text."""
+    normalized = " ".join(question.lower().strip().split())
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
 def _migrate_schema(conn: sqlite3.Connection, db_path: str) -> None:
     """
     Migrate the *facts* table from any legacy schema to the current schema.
@@ -78,91 +84,106 @@ def _migrate_schema(conn: sqlite3.Connection, db_path: str) -> None:
             )
         """)
 
-        # Build SELECT expression that maps old columns to new ones.
-        # Each column value is fetched per-row using parameterized queries so no
-        # dynamic SQL identifiers are ever interpolated from external input.
         now = int(time.time())
 
-        # --- q_hash ---
+        # Determine which optional columns actually exist in the source table.
         has_q_hash = "q_hash" in present
-        # --- created_at ---
+        has_question = "question" in present
+        has_answer = "answer" in present
+        has_citations = "citations" in present
+        has_confidence = "confidence" in present
         has_created_at = "created_at" in present
         has_verified_at = "verified_at" in present
-        # --- last_accessed ---
         has_last_accessed = "last_accessed" in present
-        # --- access_count ---
         has_access_count = "access_count" in present
 
-        # Fetch all source rows first, then insert with fully-parameterized SQL.
-        src_rows = conn.execute("SELECT rowid, question, answer, citations, confidence FROM facts").fetchall()
+        LOGGER.info(
+            "facts migration source columns: %s",
+            sorted(present),
+        )
 
-        for src_rowid, question, answer, citations, confidence in src_rows:
-            # q_hash: copy if present, else NULL (backfilled later)
-            q_hash_val: Optional[str] = None
-            if has_q_hash:
-                row = conn.execute("SELECT q_hash FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                q_hash_val = row[0] if row else None
+        # Build a single SELECT that fetches all existing columns in one query
+        # per row, avoiding N+1 round-trips.  Only known, safe column names
+        # (validated against `present`, itself derived from PRAGMA table_info)
+        # are ever interpolated — no user-supplied input is used.
+        has_question_hash = "question_hash" in present
+        select_cols = ["rowid"]
+        if has_q_hash:
+            select_cols.append("q_hash")
+        if has_question:
+            select_cols.append("question")
+        if has_answer:
+            select_cols.append("answer")
+        if has_citations:
+            select_cols.append("citations")
+        if has_confidence:
+            select_cols.append("confidence")
+        if has_created_at:
+            select_cols.append("created_at")
+        if has_verified_at:
+            select_cols.append("verified_at")
+        if has_last_accessed:
+            select_cols.append("last_accessed")
+        if has_access_count:
+            select_cols.append("access_count")
+        if has_question_hash:
+            select_cols.append("question_hash")
 
-            # created_at
+        # All column names come exclusively from PRAGMA table_info, never from
+        # external input, so this f-string interpolation is safe.
+        col_list = ", ".join(select_cols)
+        src_rows = conn.execute(f"SELECT {col_list} FROM facts").fetchall()  # noqa: S608
+
+        col_idx = {name: i for i, name in enumerate(select_cols)}
+
+        def _get(row: tuple, col: str, default: object) -> object:
+            idx = col_idx.get(col)
+            return row[idx] if (idx is not None and row[idx] is not None) else default
+
+        for row in src_rows:
+            question = _get(row, "question", "") or ""
+            answer = _get(row, "answer", "") or ""
+            citations = _get(row, "citations", "[]")
+            confidence = _get(row, "confidence", 0.0)
+
+            # q_hash: copy from the source when present; otherwise derive from the
+            # legacy question_hash column or compute from normalized question text.
+            # We resolve this *before* the INSERT so that facts_v2's NOT NULL
+            # PRIMARY KEY constraint is never violated.
+            q_hash_src: Optional[str] = _get(row, "q_hash", None)  # type: ignore[assignment]
+            if q_hash_src:
+                q_hash_val: str = q_hash_src
+            elif "question_hash" in present:
+                q_hash_val = _get(row, "question_hash", None) or _derive_hash(question)  # type: ignore[assignment]
+            else:
+                q_hash_val = _derive_hash(question)
+
+            # created_at: prefer created_at, fall back to verified_at, then now
             if has_created_at:
-                row = conn.execute("SELECT created_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                created_at_val = row[0] if (row and row[0]) else now
+                created_at_val = _get(row, "created_at", now)
             elif has_verified_at:
-                row = conn.execute("SELECT verified_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                created_at_val = row[0] if (row and row[0]) else now
+                created_at_val = _get(row, "verified_at", now)
             else:
                 created_at_val = now
 
-            # last_accessed
+            # last_accessed: prefer last_accessed, fall back to verified_at, then now
             if has_last_accessed:
-                row = conn.execute("SELECT last_accessed FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                last_accessed_val = row[0] if (row and row[0]) else now
+                last_accessed_val = _get(row, "last_accessed", now)
             elif has_verified_at:
-                row = conn.execute("SELECT verified_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                last_accessed_val = row[0] if (row and row[0]) else now
+                last_accessed_val = _get(row, "verified_at", now)
             else:
                 last_accessed_val = now
 
-            # access_count
-            if has_access_count:
-                row = conn.execute("SELECT access_count FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                access_count_val = row[0] if (row and row[0] is not None) else 0
-            else:
-                access_count_val = 0
+            access_count_val = int(_get(row, "access_count", 0) or 0)
 
             conn.execute(
-                """INSERT INTO facts_v2
+                """INSERT OR IGNORE INTO facts_v2
                        (q_hash, question, answer, citations, confidence,
                         created_at, access_count, last_accessed)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (q_hash_val, question, answer, citations, confidence,
                  created_at_val, access_count_val, last_accessed_val),
             )
-
-        # Backfill q_hash where it was NULL (legacy schema had question_hash).
-        if "q_hash" not in present:
-            if "question_hash" in present:
-                # Copy the old hash column directly.
-                conn.execute("""
-                    UPDATE facts_v2
-                    SET q_hash = (
-                        SELECT question_hash FROM facts
-                        WHERE facts.question = facts_v2.question
-                        LIMIT 1
-                    )
-                    WHERE q_hash IS NULL
-                """)
-            # Any remaining NULLs: derive from normalized question text.
-            rows = conn.execute(
-                "SELECT rowid, question FROM facts_v2 WHERE q_hash IS NULL"
-            ).fetchall()
-            for rowid, question in rows:
-                normalized = " ".join(question.lower().strip().split())
-                q_hash = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-                conn.execute(
-                    "UPDATE facts_v2 SET q_hash = ? WHERE rowid = ?",
-                    (q_hash, rowid),
-                )
 
         conn.execute("DROP TABLE facts")
         conn.execute("ALTER TABLE facts_v2 RENAME TO facts")

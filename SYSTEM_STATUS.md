@@ -128,7 +128,10 @@ curl -X POST http://localhost:5001/answer \
 ### **Environment**
 ```bash
 # DeepSeek API
-DEEPSEEK_API_KEY=sk-26271e770fe94be59854da9117bbff4b
+# IMPORTANT: The key previously stored here was committed to version control and must
+# be treated as exposed.  Rotate it at https://platform.deepseek.com/ and set a fresh
+# value in your local .env before starting the service.
+DEEPSEEK_API_KEY=YOUR_DEEPSEEK_API_KEY
 DEEPSEEK_MODEL=deepseek-chat
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 
@@ -138,7 +141,8 @@ SAFE_MODE=false                   # Production mode
 DEEPSEEK_OCR_MOCK_MODE=true      # OCR in mock mode
 
 # Ports
-OCR_PORT=8000
+# Canonical OCR port is 6001 (POST /ocr).  The legacy value of 8000 is no longer used.
+OCR_PORT=6001
 API_PORT=5001
 GUI_PORT=3000
 ```
@@ -171,7 +175,7 @@ tail -f logs/gui-service.log
 ### **Restart Individual Service**
 ```bash
 # Find and kill process
-pkill -f "uvicorn.*8000"  # OCR
+pkill -f "uvicorn.*6001"  # OCR (canonical port)
 pkill -f "uvicorn.*5001"  # API
 pkill -f "vite.*3000"     # GUI
 
@@ -273,7 +277,7 @@ cd ..
 ## ✅ **System Health Summary**
 
 ### **All Services Operational**
-- ✅ **OCR Service**: Port 8000 (Mock Mode)
+- ✅ **OCR Service**: Port 6001 — canonical route `POST /ocr` (Mock Mode)
 - ✅ **REST API**: Port 5001 (Real DeepSeek)
 - ✅ **GUI**: Port 3000/3001 (Production Build)
 
