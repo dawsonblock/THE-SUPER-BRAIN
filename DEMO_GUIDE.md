@@ -362,7 +362,7 @@ pkill -f uvicorn
 pkill -f vite
 
 # Restart
-cd brain-ai/deepseek-ocr-service && DEEPSEEK_OCR_MOCK_MODE=true python3 -m uvicorn app.main:app --port 8000 &
+cd brain-ai/deepseek-ocr-service && DEEPSEEK_OCR_MOCK_MODE=true python3 -m uvicorn app.main:app --port 6001 &
 cd brain-ai-rest-service && REQUIRE_API_KEY_FOR_WRITES=false python3 -m uvicorn app.app:app --port 5001 &
 cd brain-ai-gui && npm run dev &
 ```

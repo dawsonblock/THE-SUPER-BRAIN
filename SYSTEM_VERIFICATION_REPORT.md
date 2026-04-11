@@ -102,15 +102,16 @@ Comprehensive verification of the Brain-AI RAG++ system completed. System is ope
 
 #### OCR Service
 - **Status**: ✅ RUNNING
-- **URL**: http://localhost:8000
+- **URL**: http://localhost:6001
 - **Mode**: Mock (DEEPSEEK_OCR_MOCK_MODE=true)
 - **Health**: Healthy
 - **Response Time**: < 5ms
 
 **Endpoints Verified:**
 ```
-✅ GET  /health  - Returns healthy status
-✅ POST /ocr/extract - Processes requests
+✅ GET  /health      - Returns healthy status
+✅ POST /ocr         - Canonical route: returns status, text, latency_ms
+✅ POST /ocr/extract - Legacy internal route (secondary)
 ```
 
 #### REST API Service
@@ -126,8 +127,10 @@ Comprehensive verification of the Brain-AI RAG++ system completed. System is ope
 ✅ GET  /readyz  - Service ready
 ✅ GET  /metrics - Prometheus metrics available
 ✅ POST /index   - Document indexing works
-✅ POST /query   - Query processing works
-✅ POST /answer  - Query alias works
+✅ POST /answer  - Canonical query route (use this)
+```
+*(Note: `/query` was a legacy alias — it is no longer active. Use `POST /answer`.)*
+```
 ```
 
 **Sample Response Times:**

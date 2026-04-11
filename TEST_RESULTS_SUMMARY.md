@@ -26,7 +26,7 @@ Successfully fixed and tested the entire Brain-AI RAG++ system end-to-end. All c
 
 ### 2. OCR Service ✅
 - **Status**: Running with mock mode
-- **Port**: 8000
+- **Port**: 6001 — canonical route `POST /ocr`
 - **Health Check**: PASSED
 - **Endpoint**: `/health` returns healthy status
 - **Mock Mode**: Enabled for testing without actual DeepSeek OCR model
@@ -38,8 +38,8 @@ Successfully fixed and tested the entire Brain-AI RAG++ system end-to-end. All c
 - **Endpoints Verified**:
   - `/healthz` - Health check ✓
   - `/index` - Document indexing ✓
-  - `/query` - Query processing ✓
-  - `/answer` - Query alias ✓
+  - `/answer` - Canonical query route ✓
+  - *(Note: `/query` was a legacy alias — it is no longer active)*
 
 ### 4. Smoke Tests ✅
 All 5 smoke tests passed:
@@ -94,7 +94,7 @@ All 5 smoke tests passed:
 
 ### Services Running
 ```
-OCR Service:  http://localhost:8000 (mock mode)
+OCR Service:  http://localhost:6001 (mock mode) — canonical route: POST /ocr
 REST API:     http://localhost:5001 (safe mode, no API key required)
 ```
 
@@ -117,7 +117,7 @@ LLM_STUB=true
 ```bash
 # Terminal 1: OCR Service
 cd brain-ai/deepseek-ocr-service
-DEEPSEEK_OCR_MOCK_MODE=true python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+DEEPSEEK_OCR_MOCK_MODE=true python3 -m uvicorn app.main:app --host 0.0.0.0 --port 6001
 
 # Terminal 2: REST API
 cd brain-ai-rest-service

@@ -78,55 +78,88 @@ def _migrate_schema(conn: sqlite3.Connection, db_path: str) -> None:
             )
         """)
 
-        # Build SELECT expression that maps old columns to new ones.
-        # Each column value is fetched per-row using parameterized queries so no
-        # dynamic SQL identifiers are ever interpolated from external input.
         now = int(time.time())
 
-        # --- q_hash ---
+        # Determine which optional columns actually exist in the source table.
         has_q_hash = "q_hash" in present
-        # --- created_at ---
+        has_question = "question" in present
+        has_answer = "answer" in present
+        has_citations = "citations" in present
+        has_confidence = "confidence" in present
         has_created_at = "created_at" in present
         has_verified_at = "verified_at" in present
-        # --- last_accessed ---
         has_last_accessed = "last_accessed" in present
-        # --- access_count ---
         has_access_count = "access_count" in present
 
-        # Fetch all source rows first, then insert with fully-parameterized SQL.
-        src_rows = conn.execute("SELECT rowid, question, answer, citations, confidence FROM facts").fetchall()
+        LOGGER.info(
+            "facts migration source columns: %s",
+            sorted(present),
+        )
 
-        for src_rowid, question, answer, citations, confidence in src_rows:
-            # q_hash: copy if present, else NULL (backfilled later)
+        # Columns we can unconditionally SELECT (question and answer exist in all
+        # known legacy schemas; confidence always exists too).  We fetch each row
+        # with a minimal safe SELECT and handle missing columns as defaults below.
+        src_rows = conn.execute("SELECT rowid FROM facts").fetchall()
+
+        for (src_rowid,) in src_rows:
+            # question
+            if has_question:
+                r = conn.execute("SELECT question FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                question = (r[0] if r else "") or ""
+            else:
+                question = ""
+
+            # answer
+            if has_answer:
+                r = conn.execute("SELECT answer FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                answer = (r[0] if r else "") or ""
+            else:
+                answer = ""
+
+            # citations — backfill to "[]" when the column is absent
+            if has_citations:
+                r = conn.execute("SELECT citations FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                citations = (r[0] if (r and r[0] is not None) else "[]")
+            else:
+                citations = "[]"
+
+            # confidence
+            if has_confidence:
+                r = conn.execute("SELECT confidence FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                confidence = (r[0] if (r and r[0] is not None) else 0.0)
+            else:
+                confidence = 0.0
+
+            # q_hash — copy if present; backfill later for NULLs
             q_hash_val: Optional[str] = None
             if has_q_hash:
-                row = conn.execute("SELECT q_hash FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                q_hash_val = row[0] if row else None
+                r = conn.execute("SELECT q_hash FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                q_hash_val = r[0] if r else None
 
             # created_at
             if has_created_at:
-                row = conn.execute("SELECT created_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                created_at_val = row[0] if (row and row[0]) else now
+                r = conn.execute("SELECT created_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                created_at_val = r[0] if (r and r[0]) else now
             elif has_verified_at:
-                row = conn.execute("SELECT verified_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                created_at_val = row[0] if (row and row[0]) else now
+                r = conn.execute("SELECT verified_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                created_at_val = r[0] if (r and r[0]) else now
             else:
                 created_at_val = now
 
             # last_accessed
             if has_last_accessed:
-                row = conn.execute("SELECT last_accessed FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                last_accessed_val = row[0] if (row and row[0]) else now
+                r = conn.execute("SELECT last_accessed FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                last_accessed_val = r[0] if (r and r[0]) else now
             elif has_verified_at:
-                row = conn.execute("SELECT verified_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                last_accessed_val = row[0] if (row and row[0]) else now
+                r = conn.execute("SELECT verified_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                last_accessed_val = r[0] if (r and r[0]) else now
             else:
                 last_accessed_val = now
 
             # access_count
             if has_access_count:
-                row = conn.execute("SELECT access_count FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
-                access_count_val = row[0] if (row and row[0] is not None) else 0
+                r = conn.execute("SELECT access_count FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                access_count_val = r[0] if (r and r[0] is not None) else 0
             else:
                 access_count_val = 0
 
