@@ -31,21 +31,18 @@ Document Processing Pipeline
 
 ### Document Processing
 
-**POST /api/v1/documents/process**
-Process a single document through OCR and indexing pipeline.
+**POST /index**
+Process a single document through the indexing pipeline.
 
 Request:
 ```json
 {
   "doc_id": "doc_001",
-  "file_path": "/path/to/document.pdf",
-  "ocr_config": {
-    "service_url": "http://localhost:8000",
-    "mode": "base",
-    "task": "ocr"
-  },
-  "create_memory": true,
-  "index_document": true
+  "text": "Document content to index",
+  "metadata": {
+    "source": "pdf",
+    "author": "John"
+  }
 }
 ```
 
@@ -64,7 +61,7 @@ Response:
 }
 ```
 
-**POST /api/v1/documents/batch**
+**POST /api/v1/documents/batch** *(legacy — use `/index` per document)*
 Process multiple documents in batch.
 
 Request:
@@ -90,8 +87,8 @@ Response:
 
 ### Query Processing
 
-**POST /api/v1/query**
-Process a query and retrieve relevant information.
+**POST /answer**
+Process a query and retrieve a generated answer with supporting context.
 
 Request:
 ```json
@@ -127,7 +124,7 @@ Response:
 
 ### Vector Search
 
-**POST /api/v1/search**
+**POST /answer** *(use for semantic search — pass `top_k` to control results)*
 Search for similar documents using vector similarity.
 
 Request:
@@ -154,7 +151,7 @@ Response:
 }
 ```
 
-**POST /api/v1/index**
+**POST /index**
 Index a document in the vector store.
 
 Request:
@@ -178,7 +175,7 @@ Response:
 
 ### Episodic Memory
 
-**POST /api/v1/episodes**
+**POST /api/v1/episodes** *(legacy — episodic memory endpoints removed from active API)*
 Add an episode to episodic memory.
 
 Request:
@@ -199,7 +196,7 @@ Response:
 }
 ```
 
-**GET /api/v1/episodes/recent?limit=10**
+**GET /api/v1/episodes/recent?limit=10** *(legacy)*
 Get recent episodes.
 
 Response:
@@ -217,7 +214,7 @@ Response:
 }
 ```
 
-**POST /api/v1/episodes/search**
+**POST /api/v1/episodes/search** *(legacy)*
 Search episodes by query.
 
 Request:
@@ -231,7 +228,7 @@ Request:
 
 ### Health and Statistics
 
-**GET /api/v1/health**
+**GET /healthz**
 Health check endpoint.
 
 Response:
@@ -266,19 +263,19 @@ Tuning:
 
 Runtime adjustment:
 ```bash
-# Update window size
-curl -X POST http://localhost:5001/api/v1/monitoring/histogram_window \
+# Update window size (internal admin endpoint)
+curl -X POST http://localhost:5001/admin/monitoring/histogram_window \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $BRAIN_AI_API_KEY" \
   -d '{"sample_size": 2048}'
 
 # Inspect current size
 curl -H "X-API-Key: $BRAIN_AI_API_KEY" \
-  http://localhost:5001/api/v1/monitoring/histogram_window
+  http://localhost:5001/admin/monitoring/histogram_window
 ```
 
 
-**GET /api/v1/stats**
+**GET /facts/stats**
 Service statistics.
 
 Response:
@@ -322,26 +319,23 @@ python -m unittest discover tests
 
 ```bash
 # Health check
-curl http://localhost:5001/api/v1/health
+curl http://localhost:5001/healthz
 
-# Process document
-curl -X POST http://localhost:5001/api/v1/documents/process \
+# Index document
+curl -X POST http://localhost:5001/index \
   -H "Content-Type: application/json" \
   -d '{
     "doc_id": "test_001",
-    "file_path": "/tmp/test.pdf",
-    "ocr_config": {
-      "service_url": "http://localhost:8000",
-      "mode": "base"
-    }
+    "text": "Sample document text",
+    "metadata": {"source": "test"}
   }'
 
-# Query
-curl -X POST http://localhost:5001/api/v1/query \
+# Query / Answer
+curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "test query",
-    "query_embedding": [0.1, 0.2, 0.3, ...],
+    "question": "test query",
+    "use_multi_agent": false,
     "top_k": 5
   }'
 ```
@@ -360,7 +354,7 @@ For now, we'll implement a Python-only version that simulates the C++ backend un
 
 Environment variables:
 - `REST_SERVICE_PORT`: Service port (default: 5001)
-- `OCR_SERVICE_URL`: OCR service URL (default: http://localhost:8000)
+- `OCR_SERVICE_URL`: OCR service URL (default: http://localhost:6001)
 - `LOG_LEVEL`: Logging level (default: info)
 - `MAX_WORKERS`: Number of worker threads (default: 4)
 

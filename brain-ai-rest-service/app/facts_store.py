@@ -13,6 +13,178 @@ from typing import Any, Dict, List, Optional
 
 LOGGER = logging.getLogger(__name__)
 
+# Absolute default: always relative to this file, regardless of cwd.
+_DEFAULT_DB_PATH = str(Path(__file__).resolve().parent.parent / "data" / "facts.db")
+
+# Current schema columns (required)
+_REQUIRED_COLUMNS = {"q_hash", "question", "answer", "citations", "confidence", "created_at", "last_accessed"}
+# Legacy columns that signal an old schema
+_LEGACY_COLUMNS = {"question_hash", "verified_at"}
+
+
+def _get_columns(conn: sqlite3.Connection, table: str) -> set:
+    """Return the set of column names for *table* (empty set if table absent)."""
+    # Only allow known table names to prevent SQL injection via f-string below.
+    if table not in {"facts", "facts_v2"}:
+        raise ValueError(f"Unexpected table name: {table!r}")
+    rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    return {row[1] for row in rows}
+
+
+def _migrate_schema(conn: sqlite3.Connection, db_path: str) -> None:
+    """
+    Migrate the *facts* table from any legacy schema to the current schema.
+
+    Migration strategy:
+      1. Inspect PRAGMA table_info(facts).
+      2. If required columns are missing or legacy columns are present:
+         a. Create facts_v2 with the current schema.
+         b. Copy rows across, mapping old column names to new ones.
+         c. Backfill q_hash from normalized question when missing.
+         d. Backfill created_at / last_accessed from legacy timestamps.
+         e. Drop old facts and rename facts_v2 → facts.
+         f. Recreate indexes.
+    """
+    present = _get_columns(conn, "facts")
+    if not present:
+        # Table doesn't exist yet — nothing to migrate.
+        return
+
+    missing = _REQUIRED_COLUMNS - present
+    legacy = _LEGACY_COLUMNS & present
+
+    if not missing and not legacy:
+        # Schema is already current.
+        return
+
+    LOGGER.warning(
+        "facts table schema mismatch at %s — missing: %s, legacy: %s — running migration",
+        db_path,
+        missing or "none",
+        legacy or "none",
+    )
+
+    try:
+        conn.execute("""
+            CREATE TABLE facts_v2 (
+                q_hash TEXT PRIMARY KEY,
+                question TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                citations TEXT NOT NULL,
+                confidence REAL NOT NULL,
+                created_at INTEGER NOT NULL,
+                access_count INTEGER DEFAULT 0,
+                last_accessed INTEGER
+            )
+        """)
+
+        # Build SELECT expression that maps old columns to new ones.
+        # Each column value is fetched per-row using parameterized queries so no
+        # dynamic SQL identifiers are ever interpolated from external input.
+        now = int(time.time())
+
+        # --- q_hash ---
+        has_q_hash = "q_hash" in present
+        # --- created_at ---
+        has_created_at = "created_at" in present
+        has_verified_at = "verified_at" in present
+        # --- last_accessed ---
+        has_last_accessed = "last_accessed" in present
+        # --- access_count ---
+        has_access_count = "access_count" in present
+
+        # Fetch all source rows first, then insert with fully-parameterized SQL.
+        src_rows = conn.execute("SELECT rowid, question, answer, citations, confidence FROM facts").fetchall()
+
+        for src_rowid, question, answer, citations, confidence in src_rows:
+            # q_hash: copy if present, else NULL (backfilled later)
+            q_hash_val: Optional[str] = None
+            if has_q_hash:
+                row = conn.execute("SELECT q_hash FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                q_hash_val = row[0] if row else None
+
+            # created_at
+            if has_created_at:
+                row = conn.execute("SELECT created_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                created_at_val = row[0] if (row and row[0]) else now
+            elif has_verified_at:
+                row = conn.execute("SELECT verified_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                created_at_val = row[0] if (row and row[0]) else now
+            else:
+                created_at_val = now
+
+            # last_accessed
+            if has_last_accessed:
+                row = conn.execute("SELECT last_accessed FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                last_accessed_val = row[0] if (row and row[0]) else now
+            elif has_verified_at:
+                row = conn.execute("SELECT verified_at FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                last_accessed_val = row[0] if (row and row[0]) else now
+            else:
+                last_accessed_val = now
+
+            # access_count
+            if has_access_count:
+                row = conn.execute("SELECT access_count FROM facts WHERE rowid = ?", (src_rowid,)).fetchone()
+                access_count_val = row[0] if (row and row[0] is not None) else 0
+            else:
+                access_count_val = 0
+
+            conn.execute(
+                """INSERT INTO facts_v2
+                       (q_hash, question, answer, citations, confidence,
+                        created_at, access_count, last_accessed)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (q_hash_val, question, answer, citations, confidence,
+                 created_at_val, access_count_val, last_accessed_val),
+            )
+
+        # Backfill q_hash where it was NULL (legacy schema had question_hash).
+        if "q_hash" not in present:
+            if "question_hash" in present:
+                # Copy the old hash column directly.
+                conn.execute("""
+                    UPDATE facts_v2
+                    SET q_hash = (
+                        SELECT question_hash FROM facts
+                        WHERE facts.question = facts_v2.question
+                        LIMIT 1
+                    )
+                    WHERE q_hash IS NULL
+                """)
+            # Any remaining NULLs: derive from normalized question text.
+            rows = conn.execute(
+                "SELECT rowid, question FROM facts_v2 WHERE q_hash IS NULL"
+            ).fetchall()
+            for rowid, question in rows:
+                normalized = " ".join(question.lower().strip().split())
+                q_hash = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+                conn.execute(
+                    "UPDATE facts_v2 SET q_hash = ? WHERE rowid = ?",
+                    (q_hash, rowid),
+                )
+
+        conn.execute("DROP TABLE facts")
+        conn.execute("ALTER TABLE facts_v2 RENAME TO facts")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_confidence ON facts(confidence DESC)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_created_at ON facts(created_at DESC)")
+        conn.commit()
+
+        LOGGER.info("facts table migration completed successfully for %s", db_path)
+
+    except Exception as exc:  # pragma: no cover
+        conn.rollback()
+        present_after = _get_columns(conn, "facts")
+        LOGGER.error(
+            "facts table migration FAILED for %s — current columns: %s — error: %s",
+            db_path,
+            present_after,
+            exc,
+        )
+        raise RuntimeError(
+            f"facts store migration failed for {db_path}: {exc}"
+        ) from exc
+
 
 class FactsStore:
     """
@@ -33,40 +205,51 @@ class FactsStore:
     - last_accessed: Last access timestamp
     """
     
-    def __init__(self, db_path: str = "./data/facts.db"):
+    def __init__(self, db_path: str = _DEFAULT_DB_PATH):
         """Initialize facts store with SQLite database."""
         self.db_path = db_path
         
         # Ensure directory exists
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         
-        # Initialize database
+        # Initialize (and migrate) database
         self._init_db()
         
         LOGGER.info("Facts store initialized at %s", db_path)
     
     def _init_db(self) -> None:
-        """Create tables if they don't exist."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS facts (
-                    q_hash TEXT PRIMARY KEY,
-                    question TEXT NOT NULL,
-                    answer TEXT NOT NULL,
-                    citations TEXT NOT NULL,
-                    confidence REAL NOT NULL,
-                    created_at INTEGER NOT NULL,
-                    access_count INTEGER DEFAULT 0,
-                    last_accessed INTEGER
-                )
-            """)
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_confidence ON facts(confidence DESC)
-            """)
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_created_at ON facts(created_at DESC)
-            """)
-            conn.commit()
+        """Create tables if they don't exist, migrate schema if needed."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                # Run migration first (no-op if schema is current or table absent).
+                _migrate_schema(conn, self.db_path)
+
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS facts (
+                        q_hash TEXT PRIMARY KEY,
+                        question TEXT NOT NULL,
+                        answer TEXT NOT NULL,
+                        citations TEXT NOT NULL,
+                        confidence REAL NOT NULL,
+                        created_at INTEGER NOT NULL,
+                        access_count INTEGER DEFAULT 0,
+                        last_accessed INTEGER
+                    )
+                """)
+                conn.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_confidence ON facts(confidence DESC)
+                """)
+                conn.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_created_at ON facts(created_at DESC)
+                """)
+                conn.commit()
+        except Exception as exc:
+            LOGGER.error(
+                "Facts store initialization failed for %s — %s",
+                self.db_path,
+                exc,
+            )
+            raise
     
     def _normalize_question(self, question: str) -> str:
         """Normalize question for consistent hashing."""
@@ -279,7 +462,7 @@ def get_facts_store() -> FactsStore:
     """Get or create global facts store instance."""
     global _facts_store
     if _facts_store is None:
-        db_path = os.getenv("FACTS_DB_PATH", "./data/facts.db")
+        db_path = os.getenv("FACTS_DB_PATH", _DEFAULT_DB_PATH)
         _facts_store = FactsStore(db_path)
     return _facts_store
 

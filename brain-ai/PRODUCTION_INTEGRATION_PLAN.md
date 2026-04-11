@@ -239,11 +239,10 @@ CREATE INDEX idx_importance ON episodes(importance);
 
 **Technical Specifications**:
 ```
-POST   /api/v1/query          - Submit semantic query
-POST   /api/v1/index          - Index document
-GET    /api/v1/explain/:id    - Get decision explanation
-GET    /api/v1/health         - Health check
-GET    /api/v1/metrics        - Prometheus metrics
+POST   /answer                - Submit semantic query / get answer
+POST   /index                 - Index document
+GET    /healthz               - Liveness health check
+GET    /metrics               - Prometheus metrics
 ```
 
 #### **Day 10-11: Observability Suite** 🟡 MEDIUM
@@ -452,7 +451,7 @@ export BRAIN_AI_LOG_LEVEL=INFO
 grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check
 
 # HTTP health check
-curl http://localhost:8080/api/v1/health
+curl http://localhost:8080/healthz
 ```
 
 ---

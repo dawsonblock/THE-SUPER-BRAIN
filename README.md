@@ -199,7 +199,7 @@ A complete AI-powered knowledge system featuring:
 ┌─────────────┐ ┌──────────┐ ┌──────────┐
 │ C++ Core    │ │ LLM API  │ │ OCR Svc  │
 │ brain_ai_   │ │ DeepSeek │ │ Port     │
-│ core.so     │ │          │ │ 8000     │
+│ core.so     │ │          │ │ 6001     │
 │             │ │          │ │          │
 │ Components: │ └──────────┘ └──────────┘
 │ - HNSW      │
@@ -377,7 +377,7 @@ SKIP_TESTS=true ./deploy.sh development
 ```bash
 cd brain-ai/deepseek-ocr-service
 DEEPSEEK_OCR_MOCK_MODE=true \
-  python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+  python3 -m uvicorn app.main:app --host 0.0.0.0 --port 6001
 ```
 
 **Terminal 2 - REST API:**
@@ -839,7 +839,7 @@ Interactive API documentation available at:
 
 ```bash
 # Check ports
-lsof -i :8000
+lsof -i :6001
 lsof -i :5001
 
 # Kill existing processes
@@ -859,7 +859,7 @@ rm -rf build
 ./build.sh
 
 # Check service status
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 curl http://localhost:5001/healthz
 ```
 

@@ -47,12 +47,10 @@ Total:               28/28  (100%) ✅
 │                   (FastAPI :5001)                           │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │ Endpoints:                                            │  │
-│  │  • /api/v1/documents/process (single + batch)        │  │
-│  │  • /api/v1/query (cognitive processing)              │  │
-│  │  • /api/v1/search (vector similarity)                │  │
-│  │  • /api/v1/index (document indexing)                 │  │
-│  │  • /api/v1/episodes (memory management)              │  │
-│  │  • /api/v1/health + /api/v1/stats                    │  │
+│  │  • /index (document indexing)                       │  │
+│  │  • /answer (query + cognitive processing)           │  │
+│  │  • /facts/stats (facts statistics)                  │  │
+│  │  • /healthz + /readyz (health checks)               │  │
 │  └──────────────────────────────────────────────────────┘  │
 └────────────────────────┬────────────────────────────────────┘
                          │
@@ -72,7 +70,7 @@ Total:               28/28  (100%) ✅
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │              DeepSeek-OCR Service                           │
-│                   (FastAPI :8000)                           │
+│                   (FastAPI :6001)                           │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │ Features:                                             │  │
 │  │  • 5 OCR modes (tiny→gundam)                         │  │
@@ -107,11 +105,11 @@ Total:               28/28  (100%) ✅
 ### 1. **DeepSeek-OCR Service** ✅ (Phase 1)
 
 **Status**: ✅ Fully Operational  
-**Port**: 8000  
+**Port**: 6001  
 **Technology**: FastAPI + Python 3.11
 
 #### Features:
-- 4 REST endpoints (/health, /status, /extract, /stats)
+- 4 REST endpoints (/health, /status, /ocr, /stats)
 - Multipart form-data file uploads
 - 5 OCR modes (tiny, small, base, large, gundam)
 - 5 task types (ocr, markdown, figure, reference, describe)
@@ -165,16 +163,12 @@ OCR Integration Tests: 10/10 PASS ✅
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/health` | Health check |
-| GET | `/api/v1/stats` | Service statistics |
-| POST | `/api/v1/documents/process` | Process single document |
-| POST | `/api/v1/documents/batch` | Process multiple documents |
-| POST | `/api/v1/query` | Process cognitive query |
-| POST | `/api/v1/search` | Vector similarity search |
-| POST | `/api/v1/index` | Index document |
-| POST | `/api/v1/episodes` | Add episode to memory |
-| GET | `/api/v1/episodes/recent` | Get recent episodes |
-| POST | `/api/v1/episodes/search` | Search episodes |
+| GET | `/healthz` | Liveness health check |
+| GET | `/readyz` | Readiness health check |
+| GET | `/facts/stats` | Facts cache statistics |
+| POST | `/index` | Index document |
+| POST | `/answer` | Process query / cognitive answer |
+| POST | `/ocr` (port 6001) | OCR text extraction |
 
 #### Test Results:
 ```
@@ -426,7 +420,7 @@ Total Changes:   +4,137 / -30 lines
 # Terminal 1: Start OCR Service
 cd /home/user/webapp/deepseek-ocr-service
 python app.py
-# Runs on http://localhost:8000
+# Runs on http://localhost:6001
 
 # Terminal 2: Start REST API Service
 cd /home/user/webapp/brain-ai-rest-service
@@ -456,23 +450,23 @@ cd /home/user/webapp
 
 ```bash
 # Health checks
-curl http://localhost:8000/health
-curl http://localhost:5001/api/v1/health
+curl http://localhost:6001/health
+curl http://localhost:5001/healthz
 
 # Process document
-curl -X POST http://localhost:5001/api/v1/documents/process \
+curl -X POST http://localhost:5001/index \
   -H "Content-Type: application/json" \
   -d '{
     "doc_id": "test_001",
-    "file_path": "/tmp/test.pdf"
+    "text": "Sample document text"
   }'
 
 # Query system
-curl -X POST http://localhost:5001/api/v1/query \
+curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What is AI?",
-    "query_embedding": [0.1, 0.2, ...],
+    "question": "What is AI?",
+    "use_multi_agent": false,
     "top_k": 5
   }'
 ```
@@ -488,13 +482,13 @@ import requests
 import json
 
 # Base URLs
-OCR_SERVICE = "http://localhost:8000"
+OCR_SERVICE = "http://localhost:6001"
 REST_SERVICE = "http://localhost:5001"
 
 # Process document
 def process_document(file_path, doc_id):
     response = requests.post(
-        f"{REST_SERVICE}/api/v1/documents/process",
+        f"{REST_SERVICE}/index",
         json={
             "doc_id": doc_id,
             "file_path": file_path,
@@ -510,7 +504,7 @@ def process_document(file_path, doc_id):
 # Query system
 def query_system(query_text, embedding):
     response = requests.post(
-        f"{REST_SERVICE}/api/v1/query",
+        f"{REST_SERVICE}/answer",
         json={
             "query": query_text,
             "query_embedding": embedding,
@@ -532,36 +526,27 @@ print(f"Confidence: {query_result['confidence']}")
 ### cURL Examples
 
 ```bash
-# Batch document processing
-curl -X POST http://localhost:5001/api/v1/documents/batch \
+# Batch document indexing (index each document individually via /index)
+curl -X POST http://localhost:5001/index \
   -H "Content-Type: application/json" \
   -d '{
     "documents": [
-      {"doc_id": "doc1", "file_path": "/path/to/doc1.pdf"},
-      {"doc_id": "doc2", "file_path": "/path/to/doc2.pdf"}
+      {"doc_id": "doc1", "text": "Content of doc 1"},
+      {"doc_id": "doc2", "text": "Content of doc 2"}
     ]
   }'
 
-# Vector search
-curl -X POST http://localhost:5001/api/v1/search \
+# Answer / semantic search
+curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "query_embedding": [0.1, 0.2, ...],
-    "top_k": 5,
-    "similarity_threshold": 0.7
+    "question": "Find documents",
+    "use_multi_agent": false,
+    "top_k": 5
   }'
 
-# Add episode to memory
-curl -X POST http://localhost:5001/api/v1/episodes \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "User question",
-    "response": "System response",
-    "query_embedding": [0.1, 0.2, ...]
-  }'
-
-# Get statistics
-curl http://localhost:5001/api/v1/stats | jq '.'
+# Facts statistics (replaces legacy /api/v1/stats)
+curl http://localhost:5001/facts/stats | jq '.'
 ```
 
 ---
@@ -675,8 +660,8 @@ tail -f brain-ai-rest-service/rest_service.log
 ### Health Checks
 ```bash
 # Check all services
-curl http://localhost:8000/health && \
-curl http://localhost:5001/api/v1/health
+curl http://localhost:6001/health && \
+curl http://localhost:5001/healthz
 ```
 
 ### Run Tests

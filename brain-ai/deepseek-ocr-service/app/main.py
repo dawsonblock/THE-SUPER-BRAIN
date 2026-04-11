@@ -287,7 +287,6 @@ async def root():
         "endpoints": {
             "health": "/health",
             "ocr": "/ocr",
-            "extract": "/ocr/extract",
             "batch": "/ocr/batch"
         }
     }

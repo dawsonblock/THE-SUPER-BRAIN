@@ -51,7 +51,7 @@ async def root():
         "endpoints": {
             "health": "/health",
             "status": "/status",
-            "extract": "/ocr/extract",
+            "ocr": "/ocr",
             "stats": "/stats"
         }
     }
