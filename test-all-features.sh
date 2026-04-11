@@ -42,7 +42,7 @@ echo -e "${BLUE}Test 1: Service Health Checks${NC}"
 echo "-----------------------------------"
 
 # Test OCR health
-curl -s http://localhost:6001/health > /dev/null
+curl -s "${OCR_URL}/health" > /dev/null
 test_result $? "OCR Service Health"
 
 # Test API health
