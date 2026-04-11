@@ -8,14 +8,12 @@ import sys
 import time
 from pathlib import Path
 
-import pytest
-
 # Ensure brain-ai-rest-service is on the path when tests run from repo root
 _SERVICE_ROOT = Path(__file__).resolve().parent.parent
 if str(_SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(_SERVICE_ROOT))
 
-from app.facts_store import FactsStore, _migrate_schema, _get_columns
+from app.facts_store import FactsStore, _get_columns
 
 
 def _norm_hash(question: str) -> str:
