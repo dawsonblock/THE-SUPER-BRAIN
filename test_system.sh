@@ -40,7 +40,7 @@ echo ""
 echo "4️⃣ Testing Query Endpoint..."
 QUERY_RESULT=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
-  -d '{"question": "What is AI?", "use_multi_agent": false}')
+  -d '{"query": "What is AI?"}')
 
 if [[ $QUERY_RESULT == *"answer"* ]]; then
     echo "   ✅ Query endpoint working"
@@ -55,7 +55,7 @@ echo ""
 echo "5️⃣ Testing Deep Think Mode (Multi-Agent)..."
 DEEPTHINK_RESULT=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
-  -d '{"question": "Calculate 15% of 250", "use_multi_agent": true}')
+  -d '{"query": "Calculate 15% of 250"}')
 
 if [[ $DEEPTHINK_RESULT == *"answer"* ]]; then
     echo "   ✅ Deep Think mode working"

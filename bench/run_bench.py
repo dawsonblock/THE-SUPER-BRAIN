@@ -51,8 +51,8 @@ def run_queries() -> List[Dict[str, object]]:
                     "query_id": idx,
                     "latency_ms": latency_ms,
                     "status": response.status_code,
-                    "hits": 0,
-                    "recall@5": 0,
+                    "citation_count": 0,
+                    "has_citations": 0,
                 }
             )
             latencies.append(latency_ms)
@@ -65,8 +65,8 @@ def run_queries() -> List[Dict[str, object]]:
                 "query_id": idx,
                 "latency_ms": latency_ms,
                 "status": 200,
-                "hits": len(citations),
-                "recall@5": 1 if citations else 0,
+                "citation_count": len(citations),
+                "has_citations": 1 if citations else 0,
             }
         )
         latencies.append(latency_ms)
@@ -76,7 +76,7 @@ def run_queries() -> List[Dict[str, object]]:
 def write_csv(records: List[Dict[str, object]], results_dir: Path) -> Path:
     csv_path = results_dir / "bench_results.csv"
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["query_id", "latency_ms", "status", "hits", "recall@5"])
+        writer = csv.DictWriter(handle, fieldnames=["query_id", "latency_ms", "status", "citation_count", "has_citations"])
         writer.writeheader()
         writer.writerows(records)
     return csv_path
@@ -84,11 +84,11 @@ def write_csv(records: List[Dict[str, object]], results_dir: Path) -> Path:
 
 def write_summary(records: List[Dict[str, object]], summary_path: Path) -> None:
     latencies = [row["latency_ms"] for row in records]
-    recall_values = [row["recall@5"] for row in records]
+    has_citations_values = [row["has_citations"] for row in records]
 
     p50 = statistics.median(latencies) if latencies else 0.0
     p95 = statistics.quantiles(latencies, n=100)[94] if len(latencies) >= 20 else max(latencies or [0.0])
-    recall = sum(recall_values) / len(recall_values) if recall_values else 0.0
+    citation_rate = sum(has_citations_values) / len(has_citations_values) if has_citations_values else 0.0
 
     summary = f"""# Brain-AI Offline Benchmark
 
@@ -96,7 +96,7 @@ def write_summary(records: List[Dict[str, object]], summary_path: Path) -> None:
 - Queries executed: {QUERY_COUNT}
 - Latency p50: {p50:.2f} ms
 - Latency p95: {p95:.2f} ms
-- Recall@5: {recall:.2%}
+- Responses with citations: {citation_rate:.2%}
 
 Artifacts:
 - `bench/results/bench_results.csv`
