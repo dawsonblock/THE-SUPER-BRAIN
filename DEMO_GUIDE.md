@@ -8,7 +8,7 @@
 
 Your Brain-AI system is now running:
 
-- 🔍 **OCR Service**: http://localhost:8000
+- 🔍 **OCR Service**: http://localhost:6001
 - 🔌 **REST API**: http://localhost:5001
 - 🌐 **GUI**: http://localhost:3001 ⭐ **USE THIS ONE**
 - 📚 **API Docs**: http://localhost:5001/docs
@@ -346,7 +346,7 @@ After recording:
 ### **Check Services**
 ```bash
 # OCR Service
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 
 # REST API
 curl http://localhost:5001/healthz

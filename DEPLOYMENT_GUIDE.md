@@ -137,9 +137,9 @@ curl -H "X-API-Key: YOUR_API_KEY" http://localhost:5001/healthz
 curl http://localhost:5001/metrics
 
 # Test query
-curl -X POST http://localhost:5001/query \
+curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
-  -d '{"query":"test","top_k":5}'
+  -d '{"query":"test"}'
 ```
 
 ---
@@ -374,10 +374,6 @@ cd brain-ai && ./build.sh
 # Backup index and metadata
 cp data/index.json data/index.json.backup
 cp data/index.json.metadata.json data/index.json.metadata.json.backup
-
-# Or use the API
-curl -X POST http://localhost:5001/api/v1/system/backup \
-  -H "X-API-Key: YOUR_KEY"
 ```
 
 **Database Backup:**

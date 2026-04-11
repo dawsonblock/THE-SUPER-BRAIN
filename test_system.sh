@@ -4,8 +4,8 @@ echo "🧪 Testing Brain-AI System..."
 echo ""
 
 # Test OCR Service
-echo "1️⃣ Testing OCR Service (port 8000)..."
-OCR_HEALTH=$(curl -s http://localhost:8000/health)
+echo "1️⃣ Testing OCR Service (port 6001)..."
+OCR_HEALTH=$(curl -s http://localhost:6001/health)
 if [[ $OCR_HEALTH == *"healthy"* ]]; then
     echo "   ✅ OCR Service is healthy"
 else
@@ -40,7 +40,7 @@ echo ""
 echo "4️⃣ Testing Query Endpoint..."
 QUERY_RESULT=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
-  -d '{"question": "What is AI?", "use_multi_agent": false}')
+  -d '{"query": "What is AI?"}')
 
 if [[ $QUERY_RESULT == *"answer"* ]]; then
     echo "   ✅ Query endpoint working"
@@ -55,7 +55,7 @@ echo ""
 echo "5️⃣ Testing Deep Think Mode (Multi-Agent)..."
 DEEPTHINK_RESULT=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
-  -d '{"question": "Calculate 15% of 250", "use_multi_agent": true}')
+  -d '{"query": "Calculate 15% of 250"}')
 
 if [[ $DEEPTHINK_RESULT == *"answer"* ]]; then
     echo "   ✅ Deep Think mode working"
@@ -70,7 +70,7 @@ echo ""
 echo "🎉 All Tests Passed!"
 echo ""
 echo "📊 System Status:"
-echo "   • OCR Service: http://localhost:8000"
+echo "   • OCR Service: http://localhost:6001"
 echo "   • REST API: http://localhost:5001"
 echo "   • GUI: http://localhost:3000"
 echo "   • API Docs: http://localhost:5001/docs"

@@ -33,11 +33,8 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:5001']
     metrics_path: '/metrics'
-  
-  - job_name: 'brain-ai-ocr'
-    static_configs:
-      - targets: ['localhost:8000']
-    metrics_path: '/metrics'
+  # Note: the OCR service does not expose a Prometheus /metrics endpoint.
+  # Use GET /stats on port 6001 for JSON statistics instead.
 ```
 
 ### Key Metrics
@@ -281,11 +278,11 @@ curl http://localhost:5001/metrics
 ### OCR Service
 ```bash
 # Health
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 # Response: {"status": "healthy", "model_loaded": true}
 
-# Metrics
-curl http://localhost:8000/metrics
+# Statistics (JSON — no Prometheus endpoint available)
+curl http://localhost:6001/stats
 ```
 
 ## �� Monitoring Checklist

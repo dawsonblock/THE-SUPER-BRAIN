@@ -39,7 +39,7 @@ CORS_ORIGINS=https://yourdomain.com
 ### Automated (Recommended)
 ```bash
 ./deploy.sh production
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 curl http://localhost:5001/healthz
 ./test_smoke.sh
 ```
@@ -48,7 +48,7 @@ curl http://localhost:5001/healthz
 1. [ ] Build C++ core
 2. [ ] Install Python dependencies
 3. [ ] Build GUI
-4. [ ] Start OCR service (port 8000)
+4. [ ] Start OCR service (port 6001)
 5. [ ] Start REST API (port 5001)
 6. [ ] Start GUI (port 3000)
 

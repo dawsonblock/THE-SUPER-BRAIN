@@ -186,9 +186,10 @@ A complete AI-powered knowledge system featuring:
          │                     │
          │  Endpoints:         │
          │  - /healthz         │
+         │  - /readyz          │
          │  - /index           │
-         │  - /query           │
          │  - /answer          │
+         │  - /facts           │
          │  - /metrics         │
          │  - /docs            │
          └──────────┬──────────┘
@@ -414,11 +415,10 @@ curl -X POST http://localhost:5001/index \
 #### Query the System
 
 ```bash
-curl -X POST http://localhost:5001/query \
+curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What is the capital of France?",
-    "top_k": 5
+    "query": "What is the capital of France?"
   }'
 ```
 
@@ -455,10 +455,10 @@ response = requests.post(
     }
 )
 
-# Query
+# Answer
 response = requests.post(
-    "http://localhost:5001/query",
-    json={"query": "programming languages", "top_k": 3}
+    "http://localhost:5001/answer",
+    json={"query": "programming languages"}
 )
 results = response.json()
 
@@ -552,17 +552,17 @@ manager.save_to("./data/index.bin")
 
 #### Query Operations
 
-**POST /query**
+**POST /answer** — canonical answer route
 
 ```json
 {
-  "query": "string",
-  "top_k": 5,
-  "filters": {"key": "value"}
+  "query": "string"
 }
 ```
 
-**POST /answer**
+*(The legacy `/query` route is no longer active. Use `/answer`.)*
+
+**POST /answer** (full options)
 
 ```json
 {

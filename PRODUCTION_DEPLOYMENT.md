@@ -113,7 +113,7 @@ sudo ./deploy-production.sh
 # Check services
 curl http://localhost/health
 curl http://localhost:5001/healthz
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 
 # View logs
 tail -f /var/log/brain-ai-*.log

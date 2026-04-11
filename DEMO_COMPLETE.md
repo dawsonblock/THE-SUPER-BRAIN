@@ -19,7 +19,7 @@ The ChatInterface TypeScript errors have been resolved:
 ## 🎯 **Your Complete System**
 
 ### **Services Running**
-- 🔍 OCR Service: http://localhost:8000
+- 🔍 OCR Service: http://localhost:6001
 - 🔌 REST API: http://localhost:5001
 - 🌐 GUI: http://localhost:3001
 - 📚 API Docs: http://localhost:5001/docs
@@ -90,7 +90,7 @@ The ChatInterface TypeScript errors have been resolved:
 4. **Show Other Endpoints**
    - /healthz - System health
    - /metrics - Prometheus metrics
-   - /query - Vector search
+   - /answer - RAG++ answer endpoint
 
 ---
 

@@ -172,15 +172,15 @@ else
     error "REST API /index endpoint failed"
 fi
 
-# Test query endpoint
-QUERY_RESPONSE=$(curl -s -X POST http://localhost:5001/query \
+# Test answer endpoint
+QUERY_RESPONSE=$(curl -s -X POST http://localhost:5001/answer \
     -H 'Content-Type: application/json' \
-    -d '{"query":"What is testing?","top_k":5}')
+    -d '{"query":"What is testing?"}')
 
 if echo "$QUERY_RESPONSE" | grep -q '"answer"'; then
-    success "REST API /query endpoint working"
+    success "REST API /answer endpoint working"
 else
-    error "REST API /query endpoint failed"
+    error "REST API /answer endpoint failed"
 fi
 
 # Test 5: GUI Accessibility

@@ -8,7 +8,7 @@
 | `/readyz` | Dependency readiness (fails when kill switch engaged) |
 | `/metrics` | Prometheus exposition |
 | `/index` | Document ingest (requires API key) |
-| `/query` | Retrieval + LLM stub generation |
+| `/answer` | Retrieval + LLM RAG++ generation |
 | `/facts` | Store/retrieve high confidence answers (requires API key) |
 | `/admin/kill` | Toggle kill switch (requires API key) |
 

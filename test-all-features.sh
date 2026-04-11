@@ -19,7 +19,7 @@ NC='\033[0m'
 
 # Configuration
 API_URL="http://localhost:5001"
-OCR_URL="http://localhost:8000"
+OCR_URL="http://localhost:6001"
 GUI_URL="http://localhost:3000"
 
 PASSED=0
@@ -42,7 +42,7 @@ echo -e "${BLUE}Test 1: Service Health Checks${NC}"
 echo "-----------------------------------"
 
 # Test OCR health
-curl -s http://localhost:8000/health > /dev/null
+curl -s "${OCR_URL}/health" > /dev/null
 test_result $? "OCR Service Health"
 
 # Test API health
@@ -104,9 +104,8 @@ echo "-----------------------------------"
 QUERY_RESPONSE=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "What is Brain-AI?",
-    "top_k": 3,
-    "use_multi_agent": false
+    "query": "What is Brain-AI?",
+    "top_k": 3
   }')
 
 echo "$QUERY_RESPONSE" | grep -q "answer"
@@ -130,10 +129,8 @@ echo "-----------------------------------"
 DEEP_THINK_RESPONSE=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "What are the key features of Brain-AI?",
-    "top_k": 5,
-    "use_multi_agent": true,
-    "enable_verification": true
+    "query": "What are the key features of Brain-AI?",
+    "top_k": 5
   }')
 
 echo "$DEEP_THINK_RESPONSE" | grep -q "answer"
@@ -160,9 +157,8 @@ START1=$(date +%s%N)
 RESPONSE1=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "What is fuzzy caching?",
-    "top_k": 3,
-    "enable_fuzzy_cache": true
+    "query": "What is fuzzy caching?",
+    "top_k": 3
   }')
 END1=$(date +%s%N)
 TIME1=$(( (END1 - START1) / 1000000 ))
@@ -172,9 +168,8 @@ START2=$(date +%s%N)
 RESPONSE2=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "What is fuzzy caching?",
-    "top_k": 3,
-    "enable_fuzzy_cache": true
+    "query": "What is fuzzy caching?",
+    "top_k": 3
   }')
 END2=$(date +%s%N)
 TIME2=$(( (END2 - START2) / 1000000 ))
@@ -201,10 +196,8 @@ echo "-----------------------------------"
 FUZZY_RESPONSE=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "Tell me about fuzzy caching",
-    "top_k": 3,
-    "enable_fuzzy_cache": true,
-    "fuzzy_threshold": 0.85
+    "query": "Tell me about fuzzy caching",
+    "top_k": 3
   }')
 
 echo "$FUZZY_RESPONSE" | grep -q "answer"
@@ -218,9 +211,8 @@ echo "-----------------------------------"
 HIGH_CONF_RESPONSE=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "What is Brain-AI?",
-    "confidence_threshold": 0.9,
-    "enable_verification": true
+    "query": "What is Brain-AI?",
+    "top_k": 5
   }')
 
 echo "$HIGH_CONF_RESPONSE" | grep -q "answer"
@@ -242,7 +234,7 @@ curl -s -X POST http://localhost:5001/index \
 MULTI_DOC_RESPONSE=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "What AI models are mentioned?",
+    "query": "What AI models are mentioned?",
     "top_k": 5
   }')
 
@@ -264,7 +256,7 @@ echo "-----------------------------------"
 # Test empty query
 EMPTY_RESPONSE=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
-  -d '{"question": ""}' \
+  -d '{"query": ""}' \
   -w "%{http_code}" -o /dev/null)
 
 if [ "$EMPTY_RESPONSE" = "422" ] || [ "$EMPTY_RESPONSE" = "400" ]; then
@@ -293,9 +285,8 @@ echo "-----------------------------------"
 REAL_LLM_RESPONSE=$(curl -s -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "Explain the benefits of multi-agent systems in AI",
-    "top_k": 3,
-    "use_multi_agent": false
+    "query": "Explain the benefits of multi-agent systems in AI",
+    "top_k": 3
   }')
 
 # Check that response is NOT stubbed

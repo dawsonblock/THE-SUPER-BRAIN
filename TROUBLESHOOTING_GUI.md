@@ -3,7 +3,7 @@
 ## Current Status
 
 ✅ Services Running:
-- OCR Service: http://localhost:8000
+- OCR Service: http://localhost:6001
 - REST API: http://localhost:5001  
 - GUI: http://localhost:3001
 
