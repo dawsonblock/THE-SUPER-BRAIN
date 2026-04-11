@@ -121,7 +121,6 @@ def test_migration_legacy_no_citations(tmp_path):
     assert "What is the sky color?" in answers
 
     # Citations should have been backfilled to "[]"
-    import json
     for fact in facts:
         assert fact["citations"] == []
 
