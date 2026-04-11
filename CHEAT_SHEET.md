@@ -22,7 +22,7 @@ cd brain-ai/build && ctest             # Run all tests (4s)
 ### Monitor
 ```bash
 curl http://localhost:5001/healthz     # REST API health
-curl http://localhost:8000/health      # OCR service health
+curl http://localhost:6001/health      # OCR service health
 curl http://localhost:5001/metrics     # Prometheus metrics
 ```
 
@@ -34,7 +34,7 @@ curl http://localhost:5001/metrics     # Prometheus metrics
 |---------|-----|---------|
 | GUI | http://localhost:3000 | User interface |
 | REST API | http://localhost:5001 | Main API |
-| OCR Service | http://localhost:8000 | Document OCR |
+| OCR Service | http://localhost:6001 | Document OCR |
 | Metrics | http://localhost:5001/metrics | Monitoring |
 
 ---
@@ -77,11 +77,11 @@ curl -X POST http://localhost:5001/index \
   -d '{"doc_id":"doc1","text":"Your content here"}'
 ```
 
-### Query
+### Answer a Question
 ```bash
-curl -X POST http://localhost:5001/query \
+curl -X POST http://localhost:5001/answer \
   -H "Content-Type: application/json" \
-  -d '{"query":"your question","top_k":5}'
+  -d '{"query":"your question"}'
 ```
 
 ### Get Answer (RAG++)
@@ -119,7 +119,7 @@ cd brain-ai/build && ctest --verbose   # Verbose output
 # Check ports
 lsof -i :3000                          # GUI
 lsof -i :5001                          # REST API
-lsof -i :8000                          # OCR
+lsof -i :6001                          # OCR
 
 # Check logs
 tail -f logs/rest-api.log
@@ -210,7 +210,7 @@ See: PERFORMANCE_OPTIMIZATION.md
 1. **Always check health endpoints first**
    ```bash
    curl http://localhost:5001/healthz
-   curl http://localhost:8000/health
+   curl http://localhost:6001/health
    ```
 
 2. **Use smoke tests for quick validation**
@@ -258,7 +258,7 @@ echo "========================"
 
 # Check services
 echo "REST API:    $(curl -s http://localhost:5001/healthz | jq -r '.ok')"
-echo "OCR Service: $(curl -s http://localhost:8000/health | jq -r '.status')"
+echo "OCR Service: $(curl -s http://localhost:6001/health | jq -r '.status')"
 
 # Check metrics
 echo ""

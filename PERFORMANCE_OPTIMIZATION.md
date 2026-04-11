@@ -284,8 +284,8 @@ go install github.com/rakyll/hey@latest
 hey -n 10000 -c 100 \
   -m POST \
   -H "Content-Type: application/json" \
-  -d '{"query":"test","top_k":5}' \
-  http://localhost:5001/query
+  -d '{"query":"test"}' \
+  http://localhost:5001/answer
 ```
 
 ## 🎯 Optimization Roadmap

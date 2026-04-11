@@ -9,17 +9,17 @@
 
 ### **1. OCR Service** ✅ HEALTHY
 ```
-URL:      http://localhost:8000
+URL:      http://localhost:6001
 Status:   Running in MOCK mode
 Health:   ✅ Responding
-Docs:     http://localhost:8000/docs
+Docs:     http://localhost:6001/docs
 Mode:     Mock (no GPU required)
 Uptime:   Active
 ```
 
 **Health Check:**
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 ```
 
 **Response:**
@@ -107,7 +107,7 @@ Mode:     Connected to real API
 ### **Quick Test Script**
 ```bash
 # Test OCR
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 
 # Test API
 curl http://localhost:5001/healthz
@@ -210,10 +210,9 @@ curl -X POST http://localhost:5001/answer \
 
 ### **4. OCR (Mock Mode)**
 ```bash
-# OCR endpoint exists but returns mock data
-curl -X POST http://localhost:8000/ocr \
-  -F "file=@image.png" \
-  -F "task=markdown"
+# Canonical OCR endpoint
+curl -X POST http://localhost:6001/ocr \
+  -F "file=@image.png"
 ```
 
 ---

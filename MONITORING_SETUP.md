@@ -36,7 +36,7 @@ scrape_configs:
   
   - job_name: 'brain-ai-ocr'
     static_configs:
-      - targets: ['localhost:8000']
+      - targets: ['localhost:6001']
     metrics_path: '/metrics'
 ```
 
@@ -281,11 +281,11 @@ curl http://localhost:5001/metrics
 ### OCR Service
 ```bash
 # Health
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 # Response: {"status": "healthy", "model_loaded": true}
 
 # Metrics
-curl http://localhost:8000/metrics
+curl http://localhost:6001/metrics
 ```
 
 ## �� Monitoring Checklist

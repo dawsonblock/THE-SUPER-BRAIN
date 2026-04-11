@@ -40,10 +40,10 @@ def run_queries() -> List[Dict[str, object]]:
     latencies: List[float] = []
     records: List[Dict[str, object]] = []
     for idx in range(QUERY_COUNT):
-        expected_doc = f"doc-{idx}"
-        payload = {"query": f"Explain topic {idx % 25}", "top_k": 5}
+        payload = {"query": f"Explain topic {idx % 25}"}
         started = time.perf_counter()
-        response = requests.post(f"{REST_URL}/query", json=payload, timeout=5)
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(f"{REST_URL}/answer", json=payload, timeout=5, headers=headers)
         latency_ms = (time.perf_counter() - started) * 1000
         if response.status_code != 200:
             records.append(
@@ -59,16 +59,14 @@ def run_queries() -> List[Dict[str, object]]:
             continue
 
         data = response.json()
-        hits = data.get("hits", []) or []
-        hit_ids = [hit.get("doc_id") for hit in hits]
-        recall = 1 if expected_doc in hit_ids else 0
+        citations = data.get("citations", []) or []
         records.append(
             {
                 "query_id": idx,
                 "latency_ms": latency_ms,
                 "status": 200,
-                "hits": len(hits),
-                "recall@5": recall,
+                "hits": len(citations),
+                "recall@5": 1 if citations else 0,
             }
         )
         latencies.append(latency_ms)

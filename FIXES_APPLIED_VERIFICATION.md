@@ -166,7 +166,7 @@ curl http://localhost:5001/healthz
 
 ### OCR Service
 
-**Endpoint**: `http://localhost:8000/health`
+**Endpoint**: `http://localhost:6001/health`
 
 **Status**: ✅ **HEALTHY**
 ```json
@@ -179,7 +179,7 @@ curl http://localhost:5001/healthz
 
 **Verification**:
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 # Output: {"status": "healthy"}
 ```
 

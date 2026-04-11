@@ -222,28 +222,17 @@ if result.get('cached') and result.get('match_type') == 'fuzzy':
 **Process an image:**
 
 ```bash
-curl -X POST http://localhost:8000/ocr/extract \
+curl -X POST http://localhost:6001/ocr \
   -F "file=@screenshot.png"
 ```
 
 **Response:**
 ```json
 {
+  "status": "ok",
   "text": "Extracted text from image...",
-  "confidence": 0.94,
-  "processing_time_ms": 450,
-  "model": "deepseek-ocr"
+  "latency_ms": 450
 }
-```
-
-**Batch OCR (3-5x faster with parallelization!):**
-
-```bash
-curl -X POST http://localhost:8000/ocr/batch \
-  -F "files=@image1.png" \
-  -F "files=@image2.png" \
-  -F "files=@image3.png" \
-  -F "files=@image4.png"
 ```
 
 ---
@@ -259,7 +248,7 @@ curl http://localhost:5001/healthz
 **Check OCR service health:**
 
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 ```
 
 **View metrics:**
@@ -487,7 +476,7 @@ OPENAI_API_KEY=your_key_here
 
 # Service URLs
 REST_API_URL=http://localhost:5001
-OCR_SERVICE_URL=http://localhost:8000
+OCR_SERVICE_URL=http://localhost:6001
 GUI_URL=http://localhost:3000
 
 # Feature Flags
@@ -604,8 +593,7 @@ Result: Explanation with code references
 - `GET /cache/stats` - Cache statistics
 
 **OCR**
-- `POST /ocr/extract` - Extract text from image
-- `POST /ocr/batch` - Batch OCR processing
+- `POST /ocr` - Extract text from image (port 6001)
 
 ---
 

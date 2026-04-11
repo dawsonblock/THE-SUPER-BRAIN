@@ -19,7 +19,7 @@ NC='\033[0m'
 
 # Configuration
 API_URL="http://localhost:5001"
-OCR_URL="http://localhost:8000"
+OCR_URL="http://localhost:6001"
 GUI_URL="http://localhost:3000"
 
 PASSED=0
@@ -42,7 +42,7 @@ echo -e "${BLUE}Test 1: Service Health Checks${NC}"
 echo "-----------------------------------"
 
 # Test OCR health
-curl -s http://localhost:8000/health > /dev/null
+curl -s http://localhost:6001/health > /dev/null
 test_result $? "OCR Service Health"
 
 # Test API health

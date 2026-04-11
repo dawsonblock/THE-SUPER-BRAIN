@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -43,10 +44,35 @@ from .verification import verify_answer
 
 LOGGER = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Lifespan handler — replaces deprecated @app.on_event('startup')."""
+    configure_logging()
+    LOGGER.info(
+        "Brain-AI RAG++ starting: safe_mode=%s, pybind=%s, multi_agent=%s",
+        settings.safe_mode,
+        bridge.available,
+        os.getenv("MULTI_AGENT_ENABLED", "true"),
+    )
+    Path(settings.kill_switch_path).parent.mkdir(parents=True, exist_ok=True)
+
+    # Initialize facts store
+    facts = get_facts_store()
+    stats = facts.get_stats()
+    LOGGER.info(
+        "Facts store loaded: %d facts, avg_confidence=%.3f",
+        stats.get("total_facts", 0),
+        stats.get("avg_confidence", 0.0),
+    )
+    yield
+
+
 app = FastAPI(
     title="Brain-AI RAG++ REST API",
     version="3.0.0",
     description="Production RAG system with multi-agent correction and evidence gating",
+    lifespan=_lifespan,
 )
 
 # CORS middleware
@@ -76,26 +102,26 @@ def _client_ip(request: Request) -> str:
 def _require_api_key(request: Request) -> None:
     """Validate API key if required."""
     import secrets
-    
+
     if not settings.require_api_key_for_writes:
         return
-    
+
     expected = settings.api_key
     if not expected:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="API key not configured",
         )
-    
+
     candidate = request.headers.get("X-API-Key")
     if not candidate:
         auth = request.headers.get("Authorization", "")
         if auth.startswith("Bearer "):
             candidate = auth[7:]
-    
+
     if not candidate:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing API key")
-    
+
     if not secrets.compare_digest(candidate, expected):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Invalid API key")
 
@@ -108,25 +134,6 @@ def _check_kill_switch() -> bool:
     """
     path = os.getenv("KILL_PATH", settings.kill_switch_path)
     return Path(path).exists()
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    """Initialize application on startup."""
-    configure_logging()
-    LOGGER.info(
-        "Brain-AI RAG++ starting: safe_mode=%s, pybind=%s, multi_agent=%s",
-        settings.safe_mode,
-        bridge.available,
-        os.getenv("MULTI_AGENT_ENABLED", "true"),
-    )
-    Path(settings.kill_switch_path).parent.mkdir(parents=True, exist_ok=True)
-    
-    # Initialize facts store
-    facts = get_facts_store()
-    stats = facts.get_stats()
-    LOGGER.info("Facts store loaded: %d facts, avg_confidence=%.3f",
-               stats.get("total_facts", 0), stats.get("avg_confidence", 0.0))
 
 
 @app.middleware("http")

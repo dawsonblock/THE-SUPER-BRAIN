@@ -250,7 +250,7 @@ cd brain-ai/build && ctest
 
 # Monitor
 curl http://localhost:5001/metrics
-curl http://localhost:8000/health
+curl http://localhost:6001/health
 ```
 
 ### Environment Variables
@@ -269,7 +269,7 @@ export EMBEDDING_MODEL_NAME=sentence-transformers/all-MiniLM-L6-v2
 | Service | URL | Health Check |
 |---------|-----|--------------|
 | REST API | http://localhost:5001 | /healthz |
-| OCR Service | http://localhost:8000 | /health |
+| OCR Service | http://localhost:6001 | /health |
 | GUI | http://localhost:3000 | / |
 | Metrics | http://localhost:5001 | /metrics |
 
@@ -349,16 +349,15 @@ response = requests.post(
     }
 )
 
-# Query
+# Answer (RAG++)
 response = requests.post(
-    'http://localhost:5001/query',
+    'http://localhost:5001/answer',
     json={
         'query': 'your question',
-        'top_k': 5
     }
 )
 
-# Get answer (RAG++)
+# Get answer with full options (RAG++)
 response = requests.post(
     'http://localhost:5001/answer',
     json={
