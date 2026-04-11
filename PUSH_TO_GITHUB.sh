@@ -2,6 +2,11 @@
 #
 # Push Brain-AI RAG++ v4.4.0 to GitHub
 #
+# NOTE: HISTORICAL SCRIPT — ARCHIVE ONLY
+# This script was written during the v4.4.0 upgrade (2024-11-04).
+# Route names and commit messages below reflect the state at that time.
+# The canonical answer route is now POST /answer (not /query).
+#
 # This script helps you push the complete v4.4.0 upgrade to GitHub
 # with proper commit message and tagging.
 #

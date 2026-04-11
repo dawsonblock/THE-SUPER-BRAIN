@@ -73,8 +73,8 @@ using ProgressCallback = std::function<void(size_t current, size_t total, const 
  * @code
  *   CognitiveHandler cognitive(1000);
  *   
- *   DocumentProcessorConfig config;
- *   config.ocr_config.service_url = "http://localhost:8000";
+ *   DocumentProcessor::Config config;
+ *   config.ocr_config.service_url = "http://localhost:6001";
  *   config.ocr_config.mode = "base";
  *   
  *   DocumentProcessor processor(cognitive, config);

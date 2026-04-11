@@ -8,7 +8,7 @@
 ## ✅ **Production System Status**
 
 ### **Services Running**
-✅ **OCR Service** - Port 8000  
+✅ **OCR Service** - Port 6001  
 ✅ **REST API** - Port 5001 (with Real DeepSeek API)  
 ✅ **GUI** - Port 3000/3001  
 

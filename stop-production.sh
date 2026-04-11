@@ -31,7 +31,7 @@ fi
 
 # Fallback: kill by process name
 echo "Cleaning up any remaining processes..."
-pkill -f "uvicorn.*8000" 2>/dev/null || true
+pkill -f "uvicorn.*6001" 2>/dev/null || true
 pkill -f "uvicorn.*5001" 2>/dev/null || true
 pkill -f "serve.*dist" 2>/dev/null || true
 

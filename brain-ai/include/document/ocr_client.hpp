@@ -27,7 +27,7 @@ struct OCRResult {
  * @brief Configuration for OCR processing
  */
 struct OCRConfig {
-    std::string service_url = "http://deepseek-ocr:8000";  // DeepSeek-OCR service URL
+    std::string service_url = "http://deepseek-ocr:6001";  // DeepSeek-OCR service URL (canonical port)
     std::string mode = "base";                          // Resolution: tiny|small|base|large|gundam
     std::string task = "markdown";                      // Task: ocr|markdown|figure|reference|describe
     int max_tokens = 8192;                              // Maximum tokens to generate
@@ -61,7 +61,7 @@ struct OCRConfig {
  * Example usage:
  * @code
  *   OCRConfig config;
- *   config.service_url = "http://localhost:8000";
+ *   config.service_url = "http://localhost:6001";
  *   config.mode = "base";
  *   config.task = "markdown";
  *   
@@ -152,7 +152,7 @@ private:
     
     /**
      * @brief Make HTTP POST request with retries
-     * @param endpoint API endpoint (e.g., "/ocr/extract")
+     * @param endpoint API endpoint (e.g., "/ocr")
      * @param body Request body
      * @param content_type Content-Type header
      * @return Response body or empty on failure

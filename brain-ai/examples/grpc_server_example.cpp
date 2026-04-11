@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     
     // Parse command line arguments
     std::string server_address = "0.0.0.0:50051";
-    std::string ocr_service_url = "http://localhost:8000";
+    std::string ocr_service_url = "http://localhost:6001";
     size_t episodic_capacity = 1000;
     
     for (int i = 1; i < argc; ++i) {
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
             std::cout << std::endl;
             std::cout << "Options:" << std::endl;
             std::cout << "  --address <addr>       Server address (default: 0.0.0.0:50051)" << std::endl;
-            std::cout << "  --ocr-service <url>    OCR service URL (default: http://localhost:8000)" << std::endl;
+            std::cout << "  --ocr-service <url>    OCR service URL (default: http://localhost:6001)" << std::endl;
             std::cout << "  --capacity <n>         Episodic buffer capacity (default: 1000)" << std::endl;
             std::cout << "  --help, -h             Show this help message" << std::endl;
             return 0;
