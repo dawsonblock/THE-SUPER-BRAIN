@@ -1,5 +1,9 @@
 # Bug Fix: OCR Integration Test Timeout Duration
 
+> **⚠️ HISTORICAL BUG FIX RECORD — ARCHIVE ONLY**
+> This document describes a C++ test fix from 2024-11-04.
+> The `deepseek-ocr:8000` URL below is an internal C++ test fixture address, not the canonical top-level OCR contract (`POST /ocr` on port 6001).
+
 **Date:** November 4, 2024  
 **Status:** ✅ FIXED  
 **Test:** `test_service_timeout` in `test_ocr_integration.cpp`

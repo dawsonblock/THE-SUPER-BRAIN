@@ -1,5 +1,14 @@
 # Brain-AI Enhancement Session - Complete Summary
 
+> **⚠️ HISTORICAL SESSION RECORD — ARCHIVE ONLY**
+> This document was written during the v4.5.0 enhancement session (2025-11-06).
+> Port numbers, route names, and commands described here reflect the state at that time.
+> The canonical current contracts are:
+> - Backend runtime: `brain-ai-rest-service/app/app_v2.py`
+> - Answer route: `POST /answer` (port 5001)
+> - OCR route: `POST /ocr` (port 6001)
+> References to port `8000` or other legacy items below are historical context only.
+
 **Date**: November 6, 2025  
 **Version**: 4.5.0  
 **Session Duration**: ~2 hours  

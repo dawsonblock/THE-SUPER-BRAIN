@@ -1,5 +1,10 @@
 # Final Upgrade Complete - Brain-AI RAG++ v4.4.0
 
+> **⚠️ HISTORICAL UPGRADE RECORD — ARCHIVE ONLY**
+> This document was written during the v4.4.0 upgrade (2024-11-04).
+> Route names and architecture described here may not reflect the current state.
+> Canonical current contracts: `POST /answer` (port 5001), `POST /ocr` (port 6001).
+
 **Date:** November 4, 2024  
 **Version:** 4.4.0  
 **Status:** 🎉 PRODUCTION READY & GITHUB READY
