@@ -180,7 +180,7 @@ const assistantMessage: Message = {
 - [x] /healthz endpoint
 - [x] /index endpoint
 - [x] /answer endpoint (canonical answer route)
-- ~~[x] /query endpoint~~ *(legacy alias — no longer active; use `/answer`)*
+- [x] ~~/query endpoint~~ *(legacy alias — no longer active; use `/answer`)*
 - [x] /docs (Swagger UI)
 - [x] /metrics endpoint
 - [x] CORS support
