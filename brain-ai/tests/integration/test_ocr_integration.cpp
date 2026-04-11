@@ -13,7 +13,7 @@ using namespace brain_ai;
 using namespace brain_ai::document;
 
 // Test configuration
-const std::string OCR_SERVICE_URL = "http://localhost:8000";
+const std::string OCR_SERVICE_URL = "http://localhost:6001";
 const int MAX_WAIT_SECONDS = 30;
 const int RETRY_DELAY_MS = 1000;
 

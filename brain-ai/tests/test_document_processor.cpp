@@ -39,12 +39,12 @@ using namespace brain_ai::document;
 // Test OCRClient configuration
 bool test_ocr_client_config() {
     OCRConfig config;
-    config.service_url = "http://localhost:8000";
+    config.service_url = "http://localhost:6001";
     config.mode = "base";
     config.task = "markdown";
     config.max_tokens = 4096;
     
-    EXPECT_EQ(config.service_url, "http://localhost:8000");
+    EXPECT_EQ(config.service_url, "http://localhost:6001");
     EXPECT_EQ(config.mode, "base");
     EXPECT_EQ(config.task, "markdown");
     EXPECT_EQ(config.max_tokens, 4096);
@@ -138,7 +138,7 @@ bool test_document_processor_config() {
     CognitiveHandler cognitive(100);
     
     DocumentProcessor::Config config;
-    config.ocr_config.service_url = "http://localhost:8000";
+    config.ocr_config.service_url = "http://localhost:6001";
     config.auto_generate_embeddings = true;
     config.create_episodic_memory = true;
     config.index_in_vector_store = true;
@@ -146,7 +146,7 @@ bool test_document_processor_config() {
     DocumentProcessor processor(cognitive, config);
     
     const auto& proc_config = processor.get_config();
-    EXPECT_EQ(proc_config.ocr_config.service_url, "http://localhost:8000");
+    EXPECT_EQ(proc_config.ocr_config.service_url, "http://localhost:6001");
     EXPECT_TRUE(proc_config.auto_generate_embeddings);
     EXPECT_TRUE(proc_config.create_episodic_memory);
     EXPECT_TRUE(proc_config.index_in_vector_store);

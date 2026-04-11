@@ -371,7 +371,7 @@ OCRResult OCRClient::process_image(const std::vector<uint8_t>& image_data,
     std::string content_type = "multipart/form-data; boundary=" + boundary;
     
     // Make request with retries
-    auto response = make_request("/ocr/extract", body, content_type);
+    auto response = make_request("/ocr", body, content_type);
     
     auto end_time = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
