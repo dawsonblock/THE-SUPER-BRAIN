@@ -130,8 +130,6 @@ Comprehensive verification of the Brain-AI RAG++ system completed. System is ope
 ✅ POST /answer  - Canonical query route (use this)
 ```
 *(Note: `/query` was a legacy alias — it is no longer active. Use `POST /answer`.)*
-```
-```
 
 **Sample Response Times:**
 - Health check: ~5ms
