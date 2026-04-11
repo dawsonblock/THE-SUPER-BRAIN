@@ -128,7 +128,10 @@ curl -X POST http://localhost:5001/answer \
 ### **Environment**
 ```bash
 # DeepSeek API
-DEEPSEEK_API_KEY=sk-26271e770fe94be59854da9117bbff4b
+# IMPORTANT: The key previously stored here was committed to version control and must
+# be treated as exposed.  Rotate it at https://platform.deepseek.com/ and set a fresh
+# value in your local .env before starting the service.
+DEEPSEEK_API_KEY=YOUR_DEEPSEEK_API_KEY
 DEEPSEEK_MODEL=deepseek-chat
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 

@@ -31,6 +31,12 @@ def _get_columns(conn: sqlite3.Connection, table: str) -> set:
     return {row[1] for row in rows}
 
 
+def _derive_hash(question: str) -> str:
+    """Compute a stable q_hash from normalized question text."""
+    normalized = " ".join(question.lower().strip().split())
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
 def _migrate_schema(conn: sqlite3.Connection, db_path: str) -> None:
     """
     Migrate the *facts* table from any legacy schema to the current schema.
@@ -100,6 +106,7 @@ def _migrate_schema(conn: sqlite3.Connection, db_path: str) -> None:
         # per row, avoiding N+1 round-trips.  Only known, safe column names
         # (validated against `present`, itself derived from PRAGMA table_info)
         # are ever interpolated — no user-supplied input is used.
+        has_question_hash = "question_hash" in present
         select_cols = ["rowid"]
         if has_q_hash:
             select_cols.append("q_hash")
@@ -119,6 +126,8 @@ def _migrate_schema(conn: sqlite3.Connection, db_path: str) -> None:
             select_cols.append("last_accessed")
         if has_access_count:
             select_cols.append("access_count")
+        if has_question_hash:
+            select_cols.append("question_hash")
 
         # All column names come exclusively from PRAGMA table_info, never from
         # external input, so this f-string interpolation is safe.
@@ -136,7 +145,18 @@ def _migrate_schema(conn: sqlite3.Connection, db_path: str) -> None:
             answer = _get(row, "answer", "") or ""
             citations = _get(row, "citations", "[]")
             confidence = _get(row, "confidence", 0.0)
-            q_hash_val: Optional[str] = _get(row, "q_hash", None)  # type: ignore[assignment]
+
+            # q_hash: copy from the source when present; otherwise derive from the
+            # legacy question_hash column or compute from normalized question text.
+            # We resolve this *before* the INSERT so that facts_v2's NOT NULL
+            # PRIMARY KEY constraint is never violated.
+            q_hash_src: Optional[str] = _get(row, "q_hash", None)  # type: ignore[assignment]
+            if q_hash_src:
+                q_hash_val: str = q_hash_src
+            elif "question_hash" in present:
+                q_hash_val = _get(row, "question_hash", None) or _derive_hash(question)  # type: ignore[assignment]
+            else:
+                q_hash_val = _derive_hash(question)
 
             # created_at: prefer created_at, fall back to verified_at, then now
             if has_created_at:
@@ -157,38 +177,13 @@ def _migrate_schema(conn: sqlite3.Connection, db_path: str) -> None:
             access_count_val = int(_get(row, "access_count", 0) or 0)
 
             conn.execute(
-                """INSERT INTO facts_v2
+                """INSERT OR IGNORE INTO facts_v2
                        (q_hash, question, answer, citations, confidence,
                         created_at, access_count, last_accessed)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (q_hash_val, question, answer, citations, confidence,
                  created_at_val, access_count_val, last_accessed_val),
             )
-
-        # Backfill q_hash where it was NULL (legacy schema had question_hash).
-        if "q_hash" not in present:
-            if "question_hash" in present:
-                # Copy the old hash column directly.
-                conn.execute("""
-                    UPDATE facts_v2
-                    SET q_hash = (
-                        SELECT question_hash FROM facts
-                        WHERE facts.question = facts_v2.question
-                        LIMIT 1
-                    )
-                    WHERE q_hash IS NULL
-                """)
-            # Any remaining NULLs: derive from normalized question text.
-            rows = conn.execute(
-                "SELECT rowid, question FROM facts_v2 WHERE q_hash IS NULL"
-            ).fetchall()
-            for rowid, question in rows:
-                normalized = " ".join(question.lower().strip().split())
-                q_hash = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-                conn.execute(
-                    "UPDATE facts_v2 SET q_hash = ? WHERE rowid = ?",
-                    (q_hash, rowid),
-                )
 
         conn.execute("DROP TABLE facts")
         conn.execute("ALTER TABLE facts_v2 RENAME TO facts")
