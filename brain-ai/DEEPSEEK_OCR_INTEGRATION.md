@@ -1,9 +1,19 @@
 # DeepSeek-OCR Integration Architecture
 
+> **⚠️ HISTORICAL DESIGN DOCUMENT — ARCHIVE ONLY**
+> This document was written during the v4.1.0 design phase (2025-10-31).
+> The port numbers, route names, and C++ client examples below do **not** reflect the
+> current live contract.  The canonical OCR contract is:
+> - Port: **6001**
+> - Route: **POST /ocr**
+> - Response keys: `status`, `text`, `latency_ms`
+>
+> References to port `8000`, `/ocr/extract`, or C++ `OCRClient` below are legacy design artefacts.
+
 **Project**: Brain-AI v4.1.0 - Document Preprocessing Pipeline  
 **Component**: DeepSeek-OCR Integration Layer  
 **Purpose**: High-fidelity document ingestion with OCR → validation → compression → memory storage  
-**Status**: Design Phase  
+**Status**: Design Phase (archived — superseded by current implementation)
 **Date**: 2025-10-31
 
 ---
