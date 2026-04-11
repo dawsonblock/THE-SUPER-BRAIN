@@ -56,7 +56,7 @@ python3 -m pytest -q test_smoke.py test_api_endpoints.py
 
 ## 🎯 Overview
 
-Brain-AI RAG++ is a high-performance, production-ready Retrieval-Augmented Generation system that combines cutting-edge technologies for intelligent document processing and question answering.
+Brain-AI RAG++ is a high-performance Retrieval-Augmented Generation system that combines cutting-edge technologies for intelligent document processing and question answering. The Python runtime path is the validated baseline; the C++ native module is optional acceleration.
 
 ### What is Brain-AI RAG++?
 
@@ -79,8 +79,8 @@ A complete AI-powered knowledge system featuring:
 | 📈 **Scalable** | Docker-ready with horizontal scaling support |
 | 🔒 **Secure** | API key auth, CORS protection, rate limiting |
 | 📊 **Observable** | Prometheus metrics, structured logging, health checks |
-| 🧪 **Tested** | 100% test pass rate (6/6 test suites, 10/10 OCR tests) |
-| 🚀 **Production-Ready** | Automated deployment, monitoring, and recovery |
+| 🧪 **Tested** | Smoke, route, and e2e backend tests pass from repo root |
+| 🐍 **Python-first** | Validated Python runtime baseline; native C++ layer optional |
 
 ---
 

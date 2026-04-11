@@ -110,7 +110,11 @@ async def extract_text(
     temperature: float = Form(0.0)
 ):
     """
-    Extract text from document using OCR
+    Extract text from document using OCR (internal/advanced endpoint).
+
+    This is a secondary compatibility route with richer parameters.
+    The canonical public contract is ``POST /ocr`` — use that for all
+    external integrations, tests, and compose services.
     
     Parameters:
     - file: Document file (PDF, image, etc.)

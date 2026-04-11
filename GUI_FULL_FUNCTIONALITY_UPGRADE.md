@@ -1,5 +1,9 @@
 # GUI Full Functionality Upgrade
 
+> **⚠️ HISTORICAL UPGRADE RECORD — ARCHIVE ONLY**
+> This document describes changes made on 2024-11-04. The `/query` alias it
+> references is no longer active. The canonical answer route is now `POST /answer`.
+
 **Date:** November 4, 2024  
 **Status:** ✅ COMPLETE
 

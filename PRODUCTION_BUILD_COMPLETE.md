@@ -58,7 +58,7 @@ Successfully implemented comprehensive production build and deployment infrastru
   - C++ Core functionality via Python bindings
   - Docker Compose service startup
   - Service health checks
-  - REST API endpoints (/healthz, /readyz, /metrics, /index, /query)
+  - REST API endpoints (/healthz, /readyz, /metrics, /index, /answer)
   - GUI accessibility
   - Data flow: GUI → REST → C++ Core
   - Service logs for errors
@@ -128,7 +128,7 @@ Successfully implemented comprehensive production build and deployment infrastru
 │               REST API (Port 5001)                       │
 │                    FastAPI + Uvicorn                     │
 │                                                           │
-│  Endpoints: /healthz, /readyz, /index, /query           │
+│  Endpoints: /healthz, /readyz, /index, /answer          │
 │  Metrics:   /metrics (Prometheus)                       │
 └───────────────────────┬─────────────────────────────────┘
                         │ Python bindings
@@ -251,7 +251,7 @@ docker compose up --build
 
 ## Technical Debt
 
-None identified. System is production-ready.
+None identified. System is a coherent Python-first runtime with validated smoke/route/e2e backend path; native C++ acceleration is optional.
 
 ## Known Limitations
 

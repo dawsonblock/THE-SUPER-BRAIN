@@ -179,8 +179,8 @@ const assistantMessage: Message = {
 ### **API Features** ✅
 - [x] /healthz endpoint
 - [x] /index endpoint
-- [x] /query endpoint
-- [x] /answer endpoint (alias)
+- [x] /answer endpoint (canonical answer route)
+- ~~[x] /query endpoint~~ *(legacy alias — no longer active; use `/answer`)*
 - [x] /docs (Swagger UI)
 - [x] /metrics endpoint
 - [x] CORS support

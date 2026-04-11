@@ -127,8 +127,12 @@ async def extract_text(
     temperature: float = Form(0.0)
 ):
     """
-    Extract text from an image or document
-    
+    Extract text from an image or document (internal/advanced endpoint).
+
+    This is a secondary compatibility route with richer parameters.
+    The canonical public contract is ``POST /ocr`` — use that for all
+    external integrations, tests, and compose services.
+
     Args:
         file: Image file (PNG, JPEG, PDF)
         mode: Resolution mode (tiny, small, base, large, gundam)
