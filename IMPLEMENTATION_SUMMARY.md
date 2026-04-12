@@ -1,5 +1,12 @@
 # Brain-AI RAG++ Implementation Summary
 
+> **Note**: This document captures the feature implementation state as of 2025-10-31.
+> Authoritative backend: `brain-ai-rest-service/app/app_v2.py`. Canonical answer route:
+> `POST /answer` on port `5001`. Canonical OCR route: `POST /ocr` on port `6001`. The C++ native module
+> (`brain_ai_core`) is optional acceleration — the Python runtime is the validated baseline.
+> Legacy route references in the "Legacy Endpoints" section below are historical migration
+> notes only and are not active.
+
 ## ✅ Completed Features
 
 ### 1. **Multi-Agent Orchestration** ✅
@@ -304,9 +311,13 @@ security.rate_limiting.burst_size: 10
 
 ---
 
-## ✅ **SYSTEM STATUS: FULLY OPERATIONAL**
+## ✅ **SYSTEM STATUS: PYTHON RUNTIME VALIDATED**
 
-All requested features have been implemented and tested. The Brain-AI RAG++ system is production-ready with:
+All requested features have been implemented and tested against the Python runtime baseline.
+The authoritative backend is `brain-ai-rest-service/app/app_v2.py`. The C++ native module
+(`brain_ai_core`) is optional acceleration — do not treat build-status claims as a
+fully-production-ready deployment indicator without separately proving the native and
+deployment paths. The Python-first runtime is the validated baseline:
 - ✅ Multi-agent orchestration
 - ✅ Persistence
 - ✅ Tools (calculator, code sandbox, SQL)
@@ -318,7 +329,7 @@ All requested features have been implemented and tested. The Brain-AI RAG++ syst
 **Test Results**: 9/10 tests passing
 **Components**: All operational
 **DeepSeek Integration**: ✅ Working
-**C++ Backend**: ✅ Operational
+**C++ Backend**: Optional — partial (pure-Python fallback active)
 **Multi-Agent**: ✅ Verified
 
 ---
