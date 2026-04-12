@@ -114,7 +114,7 @@ Your Brain-AI system is now running:
 ### **Narration Script**
 
 ```
-"Hi! This is Brain-AI v4.5.0, a production-ready RAG++ system.
+"Hi! This is Brain-AI v4.5.0, a validated Python-first RAG++ system.
 
 [Show interface]
 Here's the modern React interface with real-time stats.
@@ -138,7 +138,7 @@ And check this out - asking the same question again...
 Instant! That's the fuzzy cache in action - 31 times faster!
 
 [Wrap up]
-This is Brain-AI - production-ready, fast, and intelligent.
+This is Brain-AI - fast and intelligent, with a validated Python-first backend.
 Check out the repo on GitHub!"
 ```
 
@@ -222,7 +222,7 @@ Check out the repo on GitHub!"
 ### **Twitter/X**
 
 ```
-🚀 Just built Brain-AI v4.5.0 - a production-ready RAG++ system!
+🚀 Just built Brain-AI v4.5.0 - a validated Python-first RAG++ system!
 
 ✨ Features:
 • Modern React GUI with Deep Think mode
@@ -243,7 +243,7 @@ Built with C++, Python, React 🔥
 ```
 🎯 Excited to share Brain-AI v4.5.0!
 
-I built a production-ready Retrieval-Augmented Generation (RAG++) system from scratch, combining:
+I built a validated Python-first Retrieval-Augmented Generation (RAG++) system from scratch, combining:
 
 🔧 Technical Stack:
 • C++17 core with HNSW vector search (<1ms latency)

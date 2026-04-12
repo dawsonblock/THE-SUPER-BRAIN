@@ -1,6 +1,6 @@
 # 🚀 Brain-AI Production Deployment Guide
 
-**Version 4.5.0 - Production-Ready**
+**Version 4.5.0 - Validated Python-First Runtime**
 
 ---
 
@@ -487,7 +487,7 @@ cd /opt/brain-ai && git pull && sudo systemctl restart brain-ai
 ---
 
 **Version**: 4.5.0  
-**Status**: Production Ready  
+**Status**: Python runtime validated; review deployment path before production use  
 **Last Updated**: 2025-11-07
 
-🚀 **Your Brain-AI system is now production-ready!**
+🚀 **Your Brain-AI Python runtime is validated and the backend path is proven!**
