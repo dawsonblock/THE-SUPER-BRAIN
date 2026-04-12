@@ -2,7 +2,7 @@
 
 > **Note**: This document captures the feature implementation state as of 2025-10-31.
 > Authoritative backend: `brain-ai-rest-service/app/app_v2.py`. Canonical answer route:
-> `POST /answer`. Canonical OCR route: `POST /ocr` on port `6001`. The C++ native module
+> `POST /answer` on port `5001`. Canonical OCR route: `POST /ocr` on port `6001`. The C++ native module
 > (`brain_ai_core`) is optional acceleration — the Python runtime is the validated baseline.
 > Legacy route references in the "Legacy Endpoints" section below are historical migration
 > notes only and are not active.
